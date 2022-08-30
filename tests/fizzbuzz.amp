@@ -1,0 +1,64 @@
+import std::io
+
+struct vector3
+{
+    x: f64 = 0;
+    y: f64 = 0;
+}
+
+operator +(v1: vector3, v2: vector3) : vector3
+{
+    return {v1.x + v2.x, v1.y + v2.y};
+}
+
+operator *(v1: vector3, s: f64) : vector3
+{
+    return {v1.x * s, v1.y * s};
+}
+
+funcretarr() : [90] int
+{
+    i := 9000;
+    match(i)
+    {
+        m0, 0 ->
+        {
+
+        }
+    }
+}
+
+main(argv: []string)
+{
+    a := vector3{90, 12};
+    b := vector3{10, 1};
+
+    c := (a + b) * 10.0;
+    io::printLn("type is: % and data is %", typeof(c).name, c);
+
+    // the above is equivalant to:
+    io::stdout.write("type is: % and data is %\n", typeof(c).name, c);
+
+    for(arg in argv)
+    {
+        import SB = std::stringbuilder;
+
+        sb := SB::StringBuilder{};
+        defer -> sb.free();
+
+        sb.append("% : %", index, arg);
+
+        io::printLn("%", sb.toString());
+    }
+
+    //Maybe create a macro that gives the source files full path? instead of this:
+    sourceFile := io::openfile("tests/fizzbuzz.amp", mode = io::FileMode.Read);
+    fileContents := sourceFile.allocReadAll();
+
+    io::printLn("total number of bytes written to stdout: %", string{data = cast(* ui8) fileContents, len = sourceFile.getSize()});
+
+    for(num in 0:argv.len) //runtime array index out of range check
+    {
+        argv[num];
+    }
+}

@@ -1,0 +1,285 @@
+import cstd
+import std::io
+
+enum TokKind
+{
+    Add;
+    Minus;
+    Mult;
+    Div;
+    OpenParen;
+    CloseParen;
+    LitInt;
+    LitFloat;
+    End;
+
+    Invalid;
+}
+
+struct Tok
+{
+    kind: TokKind;
+    lexeme: [256]i8 = [256]{0};
+}
+
+method Tok
+{
+    [thisPtr]
+    toString() : string
+    {
+        if(this.kind == TokKind.End) -> return "End of Input";
+
+        return {data = cast(* void) this.lexeme, len = this.lexeme.len};
+    }
+}
+
+enum ExprKind
+{
+    Binary;
+    Lit;
+}
+
+union Expr(ExprKind)
+{
+    Binary: ExprBinary;
+    Lit: Tok;
+}
+
+struct ExprBinary
+{
+    l: *Expr;
+    op: TokKind;
+    r: *Expr;
+}
+
+inpBuffer: *i8;
+ch: i8 = ' ';
+
+tok: Tok;
+
+totalArenaSize := 100000;
+arena := null;
+currOccupied: i64 = 0;
+
+memarena(size: i64) : *void
+{
+    if(arena == null)
+    {
+        //this is bad but its only an example
+        arena = cstd::malloc(totalArenaSize);
+    }
+
+    if(currOccupied + size > totalArenaSize)
+    {
+        io::printLn("Max arena space reached");
+        return null;
+    }
+
+    toRet := arena + currOccupied;
+    currOccupied = currOccupied + size;
+    return toRet;
+}
+
+// main(argv: []string) : int
+// {
+//     if(argv.len != 2)
+//     {
+//         io::printLn("Expected 1 argument for program, a string which represents an expression");
+//         return 0;
+//     }
+
+//     inpBuffer = cast(*i8) argv[1].data;
+//     tok = lex();
+//     e := expr();
+//     io::printLn("%", evalExpr(e));
+
+//     if(arena != null) -> cstd::free(arena);
+
+//     return 0;
+// }
+
+calc(str: string) : i64
+{
+    inpBuffer = cast(*i8) str.data;
+    ch = ' ';
+    tok = lex();
+    e := expr();
+    ret := evalExpr(e);
+
+    if(arena != null) -> cstd::free(arena);
+    arena = null;
+
+    return ret;
+}
+
+advanceLexCh()
+{
+    ch = @inpBuffer;
+    inpBuffer = inpBuffer + 1;
+}
+
+lex() : Tok
+{
+    while(ch == ' ')
+    {
+        advanceLexCh();
+    }
+
+    t: Tok = {};
+
+    if(ch == '+')
+    {
+        t.kind = TokKind.Add;
+        t.lexeme[0] = ch;
+    }
+    else if(ch == '-')
+    {
+        t.kind = TokKind.Minus;
+        t.lexeme[0] = ch;
+    }
+    else if(ch == '*')
+    {
+        t.kind = TokKind.Mult;
+        t.lexeme[0] = ch;
+    }
+    else if(ch == '/')
+    {
+        t.kind = TokKind.Div;
+        t.lexeme[0] = ch;
+    }
+    else if(ch == '(')
+    {
+        t.kind = TokKind.OpenParen;
+        t.lexeme[0] = ch;
+    }
+    else if(ch == ')')
+    {
+        t.kind = TokKind.CloseParen;
+        t.lexeme[0] = ch;
+    }
+    else if(cstd::isdigit(ch))
+    {
+        lexemeLen := 0;
+        t.lexeme[lexemeLen] = ch;
+        lexemeLen = lexemeLen + 1;
+
+        advanceLexCh();
+
+        while(cstd::isdigit(ch))
+        {
+            t.lexeme[lexemeLen] = ch;
+
+            lexemeLen = lexemeLen + 1;
+
+            advanceLexCh();
+        }
+
+        t.kind = TokKind.LitInt;
+        return t;
+    }
+    else if(ch == '\0')
+    {
+        t.kind = TokKind.End;
+        return t;
+    }
+    else
+    {
+        t.kind = TokKind.Invalid;
+        t.lexeme[0] = ch;
+    }
+
+    advanceLexCh();
+
+    return t;
+}
+
+expr() : *Expr
+{
+    e: *Expr = multTerm();
+
+    while((tok.kind == TokKind.Add) || (tok.kind == TokKind.Minus))
+    {
+        op: Tok = tok;
+        tok = lex();
+        l := e;
+
+        e = memarena(#Expr.size);
+
+        @e = Expr{ExprBinary{l = l, op = op.kind, r = multTerm()}};
+    }
+
+    return e;
+}
+
+multTerm() : *Expr
+{
+    e: *Expr = factor();
+
+    while((tok.kind == TokKind.Mult) || (tok.kind == TokKind.Div) || (tok.kind == TokKind.OpenParen))
+    {
+        op: Tok = tok;
+        isImplicitMult := (op.kind == TokKind.OpenParen);
+
+        if(!isImplicitMult) -> tok = lex();
+
+        l := e;
+        e = memarena(#Expr.size);
+        @e = Expr{ExprBinary{l = l, op = op.kind, r = factor()}};
+    }
+    return e;
+}
+
+factor() : *Expr
+{
+    e: *Expr = null;
+
+    if(tok.kind == TokKind.LitInt)
+    {
+        e = memarena(#Expr.size);
+        @e = Expr{tok};
+        tok = lex();
+    }
+    else if(tok.kind == TokKind.OpenParen)
+    {
+        tok = lex();
+        e = expr();
+
+        if(tok.kind == TokKind.CloseParen) -> tok = lex();
+        else
+        {
+            io::printLn("Expected matching paren");
+        }
+    }
+    else
+    {
+        io::printLn("Unexpected token '%'", tok.toString());
+        tok = lex();
+    }
+
+    return e;
+}
+
+evalExpr(e: *Expr) : i64
+{
+    return matchx(@e)
+    {
+        Expr.Lit(l) ->
+        {
+            av := l.lexeme;
+            cstd::atol(cast(* i8)l.lexeme);
+        }
+        Expr.Binary(b) ->
+        {
+            l := evalExpr(b.l);
+            r := evalExpr(b.r);
+
+            matchx(b.op)
+            {
+                TokKind.Add ->-> l + r;
+                TokKind.Minus ->-> l - r;
+                TokKind.Mult, TokKind.OpenParen ->-> l * r;
+                TokKind.Div ->-> l / r;
+            };
+        }
+    };
+}

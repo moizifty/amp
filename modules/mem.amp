@@ -1,0 +1,137 @@
+namespace prelude
+
+equals(a: any, b: any) : bool
+{
+    return cmp(a, b) == 0;
+}
+
+cmpStruct(a: any, b: any) : int
+{
+    using TypeKind;
+
+    smallest: i64 = 0;
+
+    if(a.type.type.structType.membs.len < b.type.type.structType.membs.len) ->
+        smallest = a.type.type.structType.membs.len;
+    else ->
+        smallest = b.type.type.structType.membs.len;
+
+    for(i in 0:smallest - 1)
+    {
+        aMemb := any{
+            type = a.type.type.structType.membs[i].type,
+            data = a.data + a.type.type.structType.membs[i].offset
+        };
+
+        bMemb := any{
+            type = b.type.type.structType.membs[i].type,
+            data = b.data + b.type.type.structType.membs[i].offset
+        };
+        result := cmp(aMemb, bMemb);
+
+        if(result != 0) ->
+            return result;
+    }
+
+    return 0;
+}
+
+
+cmpTuple(a: any, b: any) : int
+{
+    using TypeKind;
+
+    smallest: i64 = 0;
+
+    if(a.type.type.tupleType.types.len < b.type.type.tupleType.types.len ) ->
+        smallest = a.type.type.tupleType.types.len;
+    else ->
+        smallest = b.type.type.tupleType.types.len;
+
+    for(i in 0:smallest - 1)
+    {
+        aMemb := any{
+            type = a.type.type.tupleType.types[i],
+            data = a.data + a.type.type.tupleType.offsets[i]
+        };
+
+        bMemb := any{
+            type = b.type.type.tupleType.types[i],
+            data = b.data + b.type.type.tupleType.offsets[i]
+        };
+        result := cmp(aMemb, bMemb);
+
+        if(result != 0) ->
+            return result;
+    }
+
+    return 0;
+}
+
+cmpArray(a: any, b: any) : int
+{
+    using TypeKind;
+
+    aSize := (ifx(a.type.type.arrayType.isSlice) -> (cast(* ArrayView) a.data ).len; else -> a.type.type.arrayType.size;);
+    bSize := (ifx(b.type.type.arrayType.isSlice) -> (cast(* ArrayView) b.data ).len; else -> b.type.type.arrayType.size;);
+
+    aData := (ifx(a.type.type.arrayType.isSlice) -> @(cast(**void)(a.data + 8)); else -> a.data;);
+    bData := (ifx(b.type.type.arrayType.isSlice) -> @(cast(**void)(b.data + 8)); else -> b.data;);
+
+    smallerArraySize: i64 = 0;
+
+    if(aSize < bSize) ->
+        smallerArraySize = aSize;
+    else ->
+        smallerArraySize = bSize;
+
+    for(i in 0:smallerArraySize - 1)
+    {
+        aMemb := any{
+            type = a.type.type.arrayType.baseType,
+            data = aData + (i * aSize)
+        };
+
+        bMemb := any{
+            type = b.type.type.arrayType.baseType,
+            data = bData + (i * bSize)
+        };
+
+        result := cmp(aMemb, bMemb);
+
+        if(result != 0) ->
+            return result;
+    }
+
+    return 0;
+}
+
+cmp(a: any, b: any) : int
+{
+    import cstd;
+
+    using TypeKind;
+    
+    //get smaller size to avoid segfaults
+    smallerRuntimeSize := (ifx(a.type.size < b.type.size) ->
+                                a.type.size;
+                            else ->
+                                b.type.size;);
+
+    if(a.type.kind != b.type.kind) ->
+        return cstd::memcmp(a.data, b.data, smallerRuntimeSize);
+    
+    match(a.type.kind, b.type.kind)
+    {
+        TYPE_STRUCT ->->
+            return cmpStruct(a, b);
+        TYPE_TUPLE ->->
+            return cmpTuple(a, b);
+        TYPE_ARRAY ->->
+            return cmpArray(a, b);
+        TYPE_STRING ->-> return cstd::strcmp((cast(* string) a.data).data, (cast(* string) b.data).data);
+
+        else ->->
+            return cstd::memcmp(a.data, b.data, smallerRuntimeSize);
+    }
+}

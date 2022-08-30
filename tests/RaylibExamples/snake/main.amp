@@ -1,0 +1,203 @@
+import std::io
+import rl = raylib
+import sb = std::stringbuilder
+
+struct Vector2LLNode
+{
+    item: rl::Vector2;
+
+    next: *Vector2LLNode;
+    prev: *Vector2LLNode;
+
+    indexAdded: i64 = 0;  
+}
+
+struct Vector2LL
+{
+    head: *Vector2LLNode;
+    tail: *Vector2LLNode;
+    
+    length: i64 = 0;
+}
+
+newVectorLL() : *Vector2LL
+{
+    using import cstd;
+    ret: *Vector2LL = malloc(#Vector2LL.size);
+
+    ret.head = null;
+    ret.tail = null;
+    ret.length = 0;
+
+    return ret;
+}
+
+newVectorLLNode(item: rl::Vector2) : *Vector2LLNode
+{
+    using import cstd;
+    ret: *Vector2LLNode = malloc(#Vector2LLNode.size);
+
+    ret.item = item;
+    ret.indexAdded = 0;
+    ret.next = null;
+    ret.prev = null;
+
+    return ret;
+}
+
+method *Vector2LL
+{
+    push(item: rl::Vector2)
+    {
+        vll := newVectorLLNode(item);
+        if(this.head == null)
+        {
+            this.head = vll;
+            this.tail = vll;
+        }
+        else 
+        {
+            prevTail := this.tail;
+            prevTail.next = vll;
+            vll.prev = prevTail;
+
+            this.tail = vll;
+        }
+
+        this.length = this.length + 1;
+    }
+
+    remove(fromHead := false)
+    {
+        using import cstd;
+        if(fromHead)
+        {
+            this.head.next.prev = null;
+            
+            prevHead := this.head;
+            this.head = this.head.next;
+            
+            free(prevHead);
+        }
+        else
+        {
+            this.tail.prev.next = null;
+
+            prevTail := this.tail;
+            this.tail = this.tail.prev;
+            free(prevTail);
+        }
+
+        this.length = this.length - 1;
+    }
+}
+
+main()
+{
+    using rl;
+    SetConfigFlags(ConfigFlags.WndResizable);
+    InitWindow(1600, 900, "Snake".data);
+    SetTargetFPS(60);
+
+    pos := Vector2{0, 0};
+    dir := Vector2{1, 0};
+    tailList := newVectorLL();
+    tailLength := 100;
+
+    using import cstd;
+    while(!WindowShouldClose())
+    {
+        BeginDrawing();
+        defer -> EndDrawing();
+        ClearBackground({245, 245, 245});
+
+        (screenW, screenH) := (GetScreenWidth(), GetScreenHeight());
+
+        snakeUpdate(*pos, *dir, tailList);
+        tailList.push(pos);
+
+        tailUpdate(pos, tailList, tailLength);
+    }
+
+    using import cstd;
+    curr := tailList.head;
+    while(curr != null)
+    {
+        next := curr.next;
+
+        free(curr);
+
+        curr = next;
+    }
+
+    free(tailList);
+}
+
+snakeUpdate(snakePos: *rl::Vector2, snakeDir: *rl::Vector2, tailList: *Vector2LL)
+{
+    using rl;
+
+    snakeSpeed := 2.0;
+    snakeScale := Vector2{25, 25};
+    
+    //movement
+    
+    tailList.push(@snakePos);
+
+    keyPressed := GetKeyPressed();
+    match(keyPressed)
+    {
+        KeyboardKey.KEY_W ->
+        {
+            if(snakeDir.y != 1) -> @snakeDir = {0, -1};
+        }
+
+        KeyboardKey.KEY_A ->
+        {
+            if(snakeDir.x != 1) -> @snakeDir = {-1, 0};
+        }
+
+        KeyboardKey.KEY_S ->
+        {
+            if(snakeDir.y != -1) -> @snakeDir = {0, 1};
+        }
+
+        KeyboardKey.KEY_D ->
+        {
+            if(snakeDir.x != -1) -> @snakeDir = {1, 0};
+        }
+    }
+
+    if(frameCounter % 1 == 0)
+    {
+        snakeVelocity := (@snakeDir).normalized() * snakeSpeed;
+        @snakePos = @snakePos + snakeVelocity;
+    }
+    frameCounter = frameCounter + 1;
+}
+
+frameCounter := 0;
+tailUpdate(snakePos: rl::Vector2, tailList: *Vector2LL, tailLength: i32)
+{
+    using rl;
+
+    while(tailList.length >  tailLength)
+    {
+        tailList.remove(true);
+    }
+
+    curr := tailList.head;
+    while(curr != null)
+    {
+        color := Color{100, 189, 100};
+        if(curr.next == null)
+        { //if its the last tail segment
+            radius := 25.0/2.0;
+
+            DrawCircleV({curr.item.x + radius, curr.item.y + radius}, radius * 1.5, color);
+        }
+        else -> DrawRectangleV(curr.item, {25, 25}, color);
+
+        curr = curr.next;
+    }
+}

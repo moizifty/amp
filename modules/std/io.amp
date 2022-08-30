@@ -1,0 +1,200 @@
+namespace std::io
+
+import c = cstd //only for malloc and free
+import w = windows
+import std::stringbuilder
+
+struct file
+{
+    handle: i64;
+    mode: FileMode;
+}
+
+[flag]
+enum FileMode
+{
+    Read;
+    Write;
+    ReadWrite;
+}
+
+enum FileCreation
+{
+    New;
+    Overwrite;
+    OpenExisting;
+    OpenOrCreate;
+    EraseExisting;
+}
+
+stdout := __openStdOut();
+stdin := __openStdIn();
+
+__openStdOut() : file
+{
+    return {handle = cast(i64) ((cast(* i64)w::GetStdHandle(w::StdHandle.Out))), mode = FileMode.Write};
+}
+
+__openStdIn() : file
+{
+    return {handle = cast(i64) ((cast(* i64)w::GetStdHandle(w::StdHandle.In))), mode = FileMode.Read};
+}
+
+openfile(name: string, mode := FileMode.Write, creation := FileCreation.OpenOrCreate) : file
+{
+    accessRightsFlag: w::DWORD = 0;
+    shareFlags: w::DWORD = 0;
+    creationFlags: w::DWORD = matchx(creation)
+                              {
+                                  FileCreation.New ->-> w::FileCreationFlags.CREATE_NEW;
+                                  FileCreation.Overwrite ->-> w::FileCreationFlags.CREATE_ALWAYS;
+                                  FileCreation.OpenExisting ->-> w::FileCreationFlags.OPEN_EXISTING;
+                                  FileCreation.OpenOrCreate ->-> w::FileCreationFlags.OPEN_ALWAYS;
+                                  FileCreation.EraseExisting ->-> w::FileCreationFlags.TRUNCATE_EXISTING;
+                              };
+
+    if(mode == FileMode.Read)
+    {
+        (accessRightsFlag, shareFlags) = (
+                                            (accessRightsFlag | w::AccessRightsFlags.GENERIC_READ),
+                                            shareFlags | w::FileShareFlags.READ
+                                         );
+    }
+
+    if(mode == FileMode.Write)
+    {
+        (accessRightsFlag, shareFlags) = (
+                                            (accessRightsFlag | w::AccessRightsFlags.GENERIC_WRITE),
+                                            shareFlags | w::FileShareFlags.WRITE
+                                         );
+    }
+
+    if(mode == FileMode.ReadWrite)
+    {
+        accessRightsFlag = accessRightsFlag | w::AccessRightsFlags.GENERIC_WRITE;
+        accessRightsFlag = accessRightsFlag | w::AccessRightsFlags.GENERIC_READ;
+
+        shareFlags = shareFlags | w::FileShareFlags.WRITE;
+        shareFlags = shareFlags | w::FileShareFlags.READ;
+    }
+
+    handle := w::CreateFileA(name.data, 
+                             accessRightsFlag, 
+                             shareFlags, 
+                             null, 
+                             creationFlags, 
+                             w::FileAttributeFlags.NORMAL, 
+                             null);
+
+    fh := cast(i64) ((cast(* i64)handle));
+
+    f := file{handle = fh, mode = mode};
+    return f;
+}
+
+method file
+{
+    close()
+    {
+        w::CloseHandle(cast(* void)(this.handle));
+    }
+
+    write(fmt: string, va: ...any) : ui32
+    {
+        using import std::stringbuilder;
+        
+        sb := StringBuilder{};
+        defer -> sb.free();
+
+        sb.append(fmt, ...va);
+
+        numWritten := this.writeBytes(sb.toString().data, sb.len);
+
+        return numWritten;
+    }
+
+    writeBytes(bytes: *ui8, len: i64) : ui32
+    {
+        if((this.mode != FileMode.Write) && (this.mode != FileMode.ReadWrite))
+        {
+            printLn("\nruntime error: File is not writable");
+            return 0;
+        }
+        numWritten: w::DWORD = 0;
+        w::WriteFile(cast(* void)(this.handle), bytes, cast(ui32) len, *numWritten, null);
+
+        return numWritten;
+    }
+
+    readBytes(dest: *void, bytesToRead: ui32) : i64
+    {
+        if((this.mode != FileMode.Read) && (this.mode != FileMode.ReadWrite))
+        {
+            printLn("\nruntime error: File is not readable");
+            return 0;
+        }
+        numRead: w::DWORD = 0;
+        w::ReadFile(cast(* void)(this.handle), dest, bytesToRead, *numRead, null);
+
+        return numRead;
+    }
+
+    allocReadAll() : *i8
+    {
+        if((this.mode != FileMode.Read) && (this.mode != FileMode.ReadWrite))
+        {
+            printLn("\nruntime error: File is not readable");
+            return null;
+        }
+        
+        fileSize := this.getSize();
+        bytes := c::malloc(fileSize);
+
+        this.readBytes(bytes, cast(ui32) fileSize);
+
+        return bytes;
+    }
+
+    getSize() : i64
+    {
+        fileSize: w::LARGE_INTEGER;
+        w::GetFileSizeEx(cast(* void) (this.handle), *fileSize);
+
+        return fileSize.QuadPart;
+    }
+}
+
+print(fmt: string, va: ...any)
+{
+    stdout.write(fmt, ...va);
+}
+
+printLn(fmt: string = "", va: ...any)
+{
+    print(fmt, ...va);
+    print("\n");
+}
+
+readChar() : i32
+{
+    // readBytes(dest: *void, bytesToRead: ui32) : i64
+
+    dest: i32 = 0;
+    stdin.readBytes(*dest, 1);
+
+    return dest;
+}
+
+readLnToStringBuilder(builder: * stringbuilder::StringBuilder)
+{
+    using stringbuilder;
+    ch := readChar();
+
+    while((ch != -1) && (ch != '\n'))
+    {
+        (@builder).appendByte(cast(ui8) ch);
+        ch = readChar();
+    }
+
+    (@builder).appendByte('\n');
+}

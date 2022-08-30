@@ -1,0 +1,79 @@
+//amp demo
+import std::io
+
+//operator overloading
+operator +(a: vec3, b: vec3) : vec3
+{
+    return {a.x + b.x, a.y + b.y, a.z + b.z};
+    //or without type inference
+    //return vec3{a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+//object functions
+method vec3
+{
+    toString()
+    {
+        io::printLn("this is a vector: %", this);
+    }
+}
+
+main()
+{
+    defer -> io::print("Heiiii %\n", 90);
+    //type introsepction
+    io::print("Heiiii %\n", typeof(190).name);
+
+    for(i in []{90, 12, 29})
+    {
+        using io;
+        print("%\n", i);
+    }
+
+    a: vec3 = {1, 2, 3};
+    b: vec3 = {9, 8, 7};
+
+    io::printLn("%", (a + b));
+    (a + b).toString();
+
+    //type inference
+
+    c := vec3{1, 2, 3};
+    d := c + c;
+    array := []{d, c, d, c, d, c};
+    io::printLn("type of d is : %", typeof(d).name);
+
+    io::printLn("length of array is: %", array.len);
+
+    //passing whole array as arguemnt for variadic function
+    io::printLn("sum is: %", sumVec(...array));
+    //or
+    io::printLn("sum is: %", sumVec(c, d, c, d, c, d));
+
+    //pattern matching
+    num := 90;
+    match(num, c, d)
+    {
+        (900 / 10) _ (_) ->
+        {
+            io::printLn("Num is 90");
+        }
+    }
+}
+
+sumVec(vecs: ...vec3) : vec3
+{
+    sum := vec3{};
+    for(vec in vecs)
+    {
+        sum = sum  + vec;
+    }
+    return sum;
+}
+
+struct vec3
+{
+    x: i64 = 0;
+    y: i64 = 0;
+    z: i64 = 0;
+}

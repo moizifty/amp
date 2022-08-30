@@ -1,0 +1,105 @@
+namespace windows
+
+[foreign]
+{
+  typealias DWORD = ui32;
+  typealias PDWORD = *ui32;
+
+  typealias LONG = i32;
+
+  typealias LONGLONG = i64;
+
+  union LARGE_INTEGER {
+    u: LARGE_INTEGER_U;
+    QuadPart: LONGLONG;
+  }
+}
+struct LARGE_INTEGER_U
+{
+    LowPart: DWORD;
+    HighPart: LONG;
+}
+
+enum AccessRightsFlags
+{
+    DELETE =                    0x00010000;
+    READ_CONTROL =              0x00020000;
+    WRITE_DAC =                 0x00040000;
+    WRITE_OWNER =               0x00080000;
+    SYNCHRONIZE =               0x00100000;
+    STANDARD_RIGHTS_REQUIRED =  0x000f0000;
+    STANDARD_RIGHTS_READ =      READ_CONTROL;
+    STANDARD_RIGHTS_WRITE =     READ_CONTROL;
+    STANDARD_RIGHTS_EXECUTE =   READ_CONTROL;
+    STANDARD_RIGHTS_ALL =       0x001f0000;
+    SPECIFIC_RIGHTS_ALL =       0x0000ffff;
+
+    MAXIMUM_ALLOWED =           0x02000000;
+
+    GENERIC_ALL =               0x10000000;
+    GENERIC_EXECUTE =           0x20000000;
+    GENERIC_WRITE =             0x40000000;
+    GENERIC_READ =              0x80000000;
+}
+
+enum FileShareFlags
+{
+    nil = 0;
+    READ = 1;
+    WRITE = 2;
+    DELETE = 4;
+}
+
+enum FileCreationFlags
+{
+    CREATE_NEW =        1;
+    CREATE_ALWAYS =     2;
+    OPEN_EXISTING =     3;
+    OPEN_ALWAYS =       4;
+    TRUNCATE_EXISTING = 5;
+}
+
+enum FileAttributeFlags
+{
+    ARCHIVE = 0x20;
+    ENCRYPTED = 0x4000;
+    HIDDEN = 0x2;
+    NORMAL = 0x80;
+    OFFLINE = 0x1000;
+    READONLY = 0x1;
+    SYSTEM = 0x4;
+    TEMPORARY = 0x100;
+}
+
+enum StdHandle
+{
+    In = -10;
+    Out = -11;
+    Err = -12;
+}
+
+[foreign("user32")]
+{
+  MessageBoxA(hwnd: *void, title: *ui8, caption: *ui8, flags: i64) : i64;
+}
+
+[foreign("kernel32")]
+{
+  CreateFileA(filename: *ui8, dwDesiredAccess: DWORD, dwShareMode: DWORD, 
+              lpSecurityAttributes: *void, dwCreationDisposition: DWORD, 
+              dwFlagsAndAttributes: DWORD, hTemplateFile: *void) : *void;
+
+  WriteFile(hFile: *void, lpBuffer: *void, 
+            nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: PDWORD, 
+            lpOverlapped: *void) : bool;
+
+  ReadFile(hFile: *void, lpBuffer: *void, 
+            nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: PDWORD, 
+            lpOverlapped: *void) : bool;
+
+  CloseHandle(handle: *void);
+
+  GetStdHandle(nStdHandle: StdHandle) : *void;
+
+  GetFileSizeEx(hFile: *void, lpFileSize: *LARGE_INTEGER) : bool;
+}

@@ -1,0 +1,57 @@
+import std::io
+
+enum ErrorCode
+{
+    A = 90;
+}
+
+
+main(args: []string)
+{
+    str := f();
+    
+    ((a, b), c, d) := (str, 1, (9, 1));
+
+    io::printLn("% - % - % - %", a, b, c, d);
+
+    ccc := "moiz";
+
+    e := "moiz" != ccc;
+    io::printLn("e: %", e);
+
+    match("moiz")
+    {
+        "moiz" ->
+        {
+
+        }
+    }
+
+    using std::stringbuilder;
+
+    sb: StringBuilder = StringBuilder{};
+    defer -> sb.free();
+
+    for(s in args)
+    {
+        sb.append(s);
+    }
+
+    io::printLn("%", sb.toString());
+}
+
+f() : tuple(ErrorCode, [2]string)
+{
+    using ErrorCode;
+
+    return (A, []{"moiz", "is"});
+}
+
+factorial(n: int) : int
+{
+    return matchx (n)
+    {
+        0, 1 ->-> 1;
+        else ->-> n * factorial(n - 1);
+    };
+}

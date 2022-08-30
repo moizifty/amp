@@ -1,0 +1,6 @@
+namespace test2::moiz::sd
+
+main()
+{
+    a := 90;
+}

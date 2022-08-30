@@ -1,0 +1,117 @@
+import std::io
+import std::stringbuilder
+
+struct s1
+{
+    a: tuple(int, int, int);
+}
+
+struct s2
+{
+    a :any= s1{(90, 90, 90)} + s1{(90, 90, 90)};
+}
+
+operator +(a: s1, b: s1) : s1
+{
+    return s1{(90, 0, 69)};
+}
+
+operator *(a: s1, b: s1) : s1
+{
+    _a := a.a[0] * b.a[0];
+    _b := a.a[1] * b.a[1];
+    _c := a.a[2] * b.a[2];
+    return s1{(_a, _b, _c)};
+}
+
+operator -(a: s1) : s1
+{
+    _a := a.a[0];
+    _b := a.a[1];
+    _c := a.a[2];
+    return s1{(-_a, -_b, -_c)};
+}
+
+enum e1
+{
+    A;
+    B;
+}
+
+union u1(e1)
+{
+    A: int;
+}
+
+method tuple(int, int, int)
+{
+    [this] open()
+    {
+
+    }
+}
+
+method int
+{
+    [thisPtr] addOne() : int
+    {
+        @this = @this + 1;
+
+        return @this;
+    }
+}
+
+main()
+{
+    a: s1;
+    b: s1;
+    ddd := s2{};
+    dddd := s2{};
+    c := a + (b + -a) + -(a + b + b + a) * b;
+
+    str := "moiz";
+    (90, 90, 90).open();
+    
+   (a.a[0]).addOne();
+
+    asa := asstring(asstring(90 + "90 + 9120"));
+
+    io::printLn("%", str[cast(i64) 1]);
+    io::printLn();
+
+    using stringbuilder;
+
+    sb: StringBuilder = StringBuilder{};
+    defer -> sb.free();
+    
+    sb.append("hiiiiii");
+
+    io::printLn("%", sb.toString());
+    // i := 0;
+    // //a: tuple(int, tuple(float, int)) = (90, (90.3, 23));
+    // b: tuple(int, int, string) = (90, 90, "90");
+
+    // b[0] = 1;
+    // io::printLn("%", b[0]);
+    // c := f()[0];
+
+    // a := s1{(90, 23, 1)};
+
+    // f := io::openfile("test.txt");
+    // defer->f.close();
+    // f.write("hiii");
+    
+    // io::printLn("%", u1{2});
+
+    f();
+    f();
+    f();
+    f();
+    f();
+    f();
+}
+
+f(a: any = s2{})
+{
+    io::printAny(a);
+}

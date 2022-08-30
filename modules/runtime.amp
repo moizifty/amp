@@ -1,0 +1,43 @@
+namespace __runtime
+import std::io
+import cstd
+
+struct SourceLoc
+{
+	fileName: string;
+	lineNum: i64;
+	colNum: i64;
+}
+
+panic()
+{
+	io::printLn("Program Panic!!");
+	cstd::exit(-1);
+}
+arraySet(a: *void, arrSize: i64, index: i64, baseSize: i64, item: *void, loc: SourceLoc)
+{
+	if(index >= arrSize)
+	{
+		io::printLn("% at (%, %): Array size is % but index given is %, max index for array is %", 
+		             loc.fileName, loc.lineNum, loc.colNum, 
+					 arrSize, index, arrSize - 1);
+		panic();
+	}
+
+	cstd::memcpy(a + (index * baseSize), item, baseSize);
+}
+
+arrayGet(a: *void, arrSize: i64, index: i64, baseSize: i64, loc: SourceLoc) : *void
+{
+	if(index >= arrSize)
+	{
+        io::printLn("% at (%, %): Array size is % but index given is %, max index for array is %", 
+		             loc.fileName, loc.lineNum, loc.colNum, 
+					 arrSize, index, arrSize - 1);
+		panic();
+
+		return null;
+	}
+
+	return a + (index * baseSize);
+}

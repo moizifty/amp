@@ -1,0 +1,109 @@
+import std::io
+
+main()
+{
+    using import raylib;
+    using import std::stringbuilder;
+
+    numBtnWidth := 60;
+    numBtnHeight := 60;
+    paddingBetweenBtns := 5;
+
+    windowWidth := numBtnWidth * 5 + paddingBetweenBtns * (5 + 1);
+    windowHeight := numBtnHeight * 4 + paddingBetweenBtns * (4 + 1) + 150;
+
+    //SetConfigFlags(ConfigFlags.WndResizable);
+    InitWindow(windowWidth, windowHeight, "Calculator".data);
+    SetTargetFPS(60);
+    
+    calcString := StringBuilder{};
+
+    while(!WindowShouldClose())
+    {
+        BeginDrawing();
+        defer -> EndDrawing();
+
+        ClearBackground({245, 245, 245});
+        
+        nextXPos := paddingBetweenBtns;
+        nextYPos := windowHeight - paddingBetweenBtns - numBtnHeight;
+
+        prevRowNum: i64 = 0;
+        for(i in 0:9)
+        {
+            rowNum := i / 3;
+            
+            if(prevRowNum != rowNum)
+            {
+                nextYPos =  nextYPos - paddingBetweenBtns - numBtnHeight;
+                nextXPos = paddingBetweenBtns;
+            }
+            else if(i != 0)
+            {
+                nextXPos = nextXPos + paddingBetweenBtns + numBtnWidth ;
+            }
+            xPos := nextXPos;
+            yPos := nextYPos;
+
+            sb := StringBuilder{};
+            defer -> sb.free();
+
+            sb.append("%", i);
+
+            if(gui::Button({xPos, yPos, numBtnWidth, numBtnHeight}, sb.toString()))
+            {
+                calcString.append("%", i);
+            }
+
+            prevRowNum = rowNum;
+        }
+
+        nextXPos = nextXPos + paddingBetweenBtns + numBtnWidth;
+        numPadEntYPos := nextYPos;
+        if(gui::Button({nextXPos, nextYPos, numBtnWidth, numBtnHeight}, "("))
+        {
+            calcString.append("(");
+        }
+
+        nextXPos = nextXPos + paddingBetweenBtns + numBtnWidth;
+        if(gui::Button({nextXPos, nextYPos, numBtnWidth, numBtnHeight}, ")"))
+        {
+            calcString.append(")");
+        }
+
+        nextXPos = nextXPos + paddingBetweenBtns + numBtnWidth;
+        if(gui::Button({nextXPos, nextYPos, numBtnWidth, numBtnHeight}, "+"))
+        {
+            calcString.append("+");
+        }
+
+        nextYPos = nextYPos + paddingBetweenBtns + numBtnHeight;
+        if(gui::Button({nextXPos, nextYPos, numBtnWidth, numBtnHeight}, "-"))
+        {
+            calcString.append("-");
+        }
+
+        nextYPos = nextYPos + paddingBetweenBtns + numBtnHeight;
+        if(gui::Button({nextXPos, nextYPos, numBtnWidth, numBtnHeight}, "/"))
+        {
+            calcString.append("/");
+        }
+
+        nextYPos = nextYPos + paddingBetweenBtns + numBtnHeight;
+        if(gui::Button({nextXPos, nextYPos, numBtnWidth, numBtnHeight}, "*"))
+        {
+            calcString.append("*");
+        }
+
+        nextXPos = nextXPos + paddingBetweenBtns + numBtnWidth;
+        if(gui::Button({nextXPos, numPadEntYPos, numBtnWidth, numBtnHeight * 4 + 3 * paddingBetweenBtns}, "="))
+        {
+            calcString.append(" = %", calc(calcString.toString()));
+            calcString.reset();
+        }
+
+        gui::SetStyle(0, 16, 25);
+        gui::Label({paddingBetweenBtns, 25 + paddingBetweenBtns, 0, 0}, calcString.toString());
+        gui::SetStyle(0, 16, 10);
+    }
+}

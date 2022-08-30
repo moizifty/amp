@@ -1,0 +1,48 @@
+import std::io
+
+a := cast (any<[][]string>) (cast ([][]string) []
+    {
+        []{"moiz", "hii"},
+        []{"moiz", "hii"}
+    });
+
+b: any;
+
+main()
+{
+    arr := cast (any<[][]string>) (cast ([][]string) []
+    {
+        []{"moiz", "hii"},
+        []{"moiz", "hii"}
+    });
+
+    io::printLn("%", a);
+    
+    i: *void = null;
+    c: any<string, int> = 90;
+
+    d: any<string> = c;
+
+    strtgr := asstring(nsjdnsnsdsdfsfsdsd);
+
+    file := io::openfile("idkwhatimdoing.txt", mode = io::FileMode.ReadWrite, creation = io::FileCreation.OpenOrCreate);
+    defer -> file.close();
+
+
+    content := file.allocReadAll();
+    defer -> io::c::free(content);
+    
+    for(num in 0 : file.getSize())
+    {
+        io::print("%", content[num]);
+    }
+
+    io::printLn("%", content);
+
+    io::stdout.write("\nhiiii\n");
+
+}
+f(a: any = 90) : i32
+{
+
+}

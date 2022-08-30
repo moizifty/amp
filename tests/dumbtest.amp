@@ -1,0 +1,12 @@
+import std::io
+
+enum e1
+{
+    A = 90;
+    B = x;
+}
+
+x := 90;
+
+y := x;
+

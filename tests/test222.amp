@@ -1,0 +1,78 @@
+import window
+import std::io
+
+enum e1
+{
+    A;
+    B;
+    C;
+}
+
+union u1(e1)
+{
+    A: int;
+    B: string;
+    C: [2]string;
+}
+
+struct s1
+{
+    a := 90;
+    b := "moiz";
+    d := u1{"science"};
+}
+
+main(argv: []string) : int
+{
+    aba := 1;
+    randomfunc(...argv);
+    for(str in funcRetArr())
+    {
+        io::printLn("%", str);
+    }
+    n := s1{};
+    n.a = 239239;
+
+    n.d = u1{[2]{"s"}};
+
+    match(n.d, 90)
+    {
+        (u1.A(i)) (ifx(true) -> 90;) ->-> io::printLn("a : %, b: %", i);
+        u1.B(i) ->-> io::printLn("b: %", i);
+        u1.C(i) ->-> io::printLn("c: %", i);
+    }
+    sds := n.a;
+
+    fl := 90;
+    sds = 1 << 5 * 1212 > fl;
+    
+    nn := [][]string{[]{"sdsd", "zzx"}, []{"a"}};
+
+    nn[1] = funcRetArr();
+
+
+    io::printLn("n: %, sds: %, nn: %", n, sds, nn);
+
+    return 0;
+}
+
+randomfunc(strArr: []string)
+{
+    f := io::openfile("test.txt");
+    defer -> io::closefile(f);
+    
+    io::printLn("the file is % bytes before write", io::getFileSize(f));
+
+    for(str in strArr)
+    {
+        io::writefile(f, str);
+        io::writefile(f, "\n");
+    }
+
+    io::printLn("the file is % bytes after write", io::getFileSize(f));
+}
+
+funcRetArr() : [3]string
+{
+    return []{"moiz", "is", "alright"};
+}

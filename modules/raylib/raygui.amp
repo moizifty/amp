@@ -1,0 +1,58 @@
+namespace raylib::gui with
+{
+    libs = "raygui";
+}
+
+import raylib
+
+[foreign("")]
+{
+    GuiButton(b: raylib::Rectangle, str: *ui8) : bool;
+    GuiGroupBox(b: raylib::Rectangle, str: *ui8) : bool;
+    GuiWindowBox(b: raylib::Rectangle, str: *ui8) : bool;
+    GuiGrid(b: raylib::Rectangle, str: *ui8, spacing: f32, subDivs: i32) : bool;
+    GuiLabel(b: raylib::Rectangle, str: *ui8);
+    GuiSetStyle(control: i32, prop: i32, val: i32);
+    GuiPanel(b: raylib::Rectangle, text: *ui8);
+    GuiTextBoxMulti(b: raylib::Rectangle, text: *ui8, textSize: i32, editMode: bool) : bool;
+}
+
+Button(r: raylib::Rectangle, label: string) : bool
+{
+    return GuiButton(r, label.data);
+}
+
+GroupBox(r: raylib::Rectangle, label: string) : bool
+{
+    return GuiGroupBox(r, label.data);
+}
+
+WindowBox(r: raylib::Rectangle, label: string) : bool
+{
+    return GuiWindowBox(r, label.data);
+}
+
+Grid(b: raylib::Rectangle, label: string, spacing: f32, subDivs: i32) : bool
+{
+    return GuiGrid(b, label.data, spacing, subDivs);
+}
+
+Label(b: raylib::Rectangle, label: string)
+{
+    GuiLabel(b, label.data);
+}
+
+Panel(b: raylib::Rectangle, label: string)
+{
+    GuiPanel(b, label.data);
+}
+
+TextBoxMulti(b: raylib::Rectangle, text: *ui8, textSize: i32, editMode: bool) : bool
+{
+    return GuiTextBoxMulti(b, text, textSize, editMode);
+}
+
+SetStyle(control: i32, prop: i32, val: i32)
+{
+    GuiSetStyle(control, prop, val);
+}

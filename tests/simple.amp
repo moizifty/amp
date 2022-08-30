@@ -1,0 +1,38 @@
+import std::io
+
+struct s1
+{
+    a := 9023;
+    b := 0;
+    c := null;
+}
+main(argc: int, argv: []string) : int
+{
+    p := null;
+    a := p - 12;
+    i := 90;
+    d := 90 - 232 + 230 * i;
+    b: *int = null;
+
+    c: any = []any{23,2 ,23, "sds"};
+
+    std::io::print("%", d);
+
+
+    fizzbuzz();
+
+    return 0;
+}
+
+fizzbuzz()
+{
+    for(num in 0:100)
+    {
+        match((num % 3) == 0, (num % 5) == 0)
+        {
+            true false ->-> std::io::print("%: fizz\n", num);
+            false true ->-> std::io::print("%: buzz\n", num);
+            true true ->->std::io::print("%: fizzbuzz\n", num);
+        }
+    }
+}

@@ -1,0 +1,13 @@
+struct OpenedFile
+{
+    relativePath: string;
+    buffer: *i8;
+    bufferLen: i64;
+}
+
+editorOpenFile(name: string) : OpenedFile
+{
+    f := io::openfile(name, mode = io::FileMode.Read);
+
+    return {name, f.allocReadAll(), f.getSize()};
+}

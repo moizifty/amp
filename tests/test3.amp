@@ -1,0 +1,36 @@
+import std::io
+
+enum e1
+{
+    A;
+    B;
+}
+
+union u1(e1)
+{
+    A: int;
+    B: []string;
+}
+
+main(args: []string)
+{
+    for(str in args)
+    {
+        io::printLn("commandline arg at index % is: %", index, str);
+    }
+
+    io::printLn("can print expressions as string, because why not %", asstring(90 + "not valid"));
+
+    taggedUnion := u1{[]{"Hi", "Whatsup"}};
+
+    io::printLn("%", taggedUnion);
+
+    taggedUnion = {9012};
+    io::printLn("% changed to %", asstring(taggedUnion), taggedUnion);
+
+    match(taggedUnion)
+    {
+        u1.A(i) ->-> io::printLn("Tagged union is set to member A and has value: %", i);
+        u1.B(i) ->-> io::printLn("Tagged union is set to member B and has value: %", i);
+    }
+}

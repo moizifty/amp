@@ -1,0 +1,33 @@
+//todo
+
+usage: -* text means the thing has been completed
+usage: -- text means the thing has NOT been completed
+
+-* make sure to properly insert any literal statments for struct literals, use same method for function call arguements
+
+-- when assigning arrays to struct members in literal
+   make it generate a memcpy;
+-- struct members that are pointers to functions are order dependendent
+-- using statements
+-- generics
+-- nullables
+-- match statements on aggregates in c backend
+-* implement using m0 or m1, match idens and stuff in llvm backend
+-* replace using std::io with local imports, so import std::io; at local scope
+-* have using import syntax, so like: using import std::io
+-* acccessing match expr names, m0, m1 not working in code gen
+-* make enums generate before structs unions tht use them
+-* tuples
+
+-* fix for loop array stuff 
+-* revamp namespace and import system, a file without a namespace will have namespace "global"
+   then to import a module or namespace, you have to do import namespaceName
+   the prelude is imported in every source file regardless.
+
+-* SOLVE circular import dependency 
+
+-* when checkign modeule decls, add type decls to a seperate list
+   then check those along side global ones, so global ones can be used inside them.
+
+-* make compiler commands to make it so that files can be marked to exclude global scope
+   these files will include things like prelude files, whihc dont need to acccess global scope

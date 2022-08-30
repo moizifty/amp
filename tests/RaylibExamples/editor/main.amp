@@ -1,0 +1,101 @@
+import std::io
+import rl = raylib
+import sb = std::stringbuilder
+
+main()
+{
+    using rl;
+    SetConfigFlags(ConfigFlags.WndResizable);
+    InitWindow(1600, 900, "Editor".data);
+    MaximizeWindow();
+    SetTargetFPS(60);
+
+    sourcePanelWidth := 150;
+    tabStartIndex: i64 = 0;
+    scrollBtnWidth := 20;
+
+    files := []{editorOpenFile("test.txt")};
+    whichOpenedFile: i64 = 0;
+    while(!WindowShouldClose())
+    {
+        BeginDrawing();
+        defer -> EndDrawing();
+        ClearBackground({245, 245, 245});
+
+        (screenW, screenH) := (GetScreenWidth(), GetScreenHeight());
+
+        (drawX, drawY) : tuple(i64, i64) = (0, 0);
+
+        editorDrawSourcePanel(drawX, drawY, sourcePanelWidth, screenH);
+        drawX = drawX + sourcePanelWidth;
+
+        drawOverfillScroll := (ifx(files.len * 100 + drawX > screenW) -> true; else -> false;);    
+        if(drawOverfillScroll)
+        {
+            if(rl::gui::Button({drawX, drawY, scrollBtnWidth, 25}, "#118#"))
+            {
+                tabStartIndex = tabStartIndex - 1;
+                tabStartIndex = cast(i32) clampInt(tabStartIndex, 0, files.len - 1);
+            }
+            drawX = drawX + scrollBtnWidth;
+        }
+
+        tabBtnClicked := editorDrawTabs({drawX, drawY, 100, 25}, screenW, files, tabStartIndex);
+        if(tabBtnClicked != -1) -> whichOpenedFile = tabBtnClicked;
+
+        gui::TextBoxMulti({drawX, 28, screenW - drawX - 3, screenH - 25}, cast(*ui8) files[whichOpenedFile].buffer, cast(i32) files[whichOpenedFile].bufferLen, false);
+
+        if(drawOverfillScroll)
+        {
+            if(rl::gui::Button({screenW - scrollBtnWidth, drawY, scrollBtnWidth, 25}, "#119#"))
+            {
+                tabStartIndex = tabStartIndex + 1;
+                tabStartIndex = cast(i32) clampInt(tabStartIndex, 0, files.len - 1);
+            }
+            drawX = drawX + scrollBtnWidth;
+        }
+    }
+}
+
+editorDrawSourcePanel(x: i64, y: i64, width: i64, height: i64)
+{
+    rl::gui::WindowBox({x, y, width, height}, "Source Browser");
+}
+
+editorDrawTabs(rect: rl::Rectangle, maxX: i64, files: []OpenedFile, tabStartIndex: i64 = 0) : i64
+{
+    btnMinWidth := rect.width / 2;
+    drawX := rect.x;
+    
+    for(i in tabStartIndex : files.len - 1)
+    {
+        w := rect.width;
+
+        if(rl::gui::Button({drawX, rect.y, w, rect.height}, files[i].relativePath))
+        {
+            return i;
+        }
+
+        drawX = drawX + w;
+    }
+
+    return -1;
+}
+
+clampFloat(val: f64, min: f64, max: f64) : f64
+{
+    if(val < min) -> return min;
+
+    if(val > max) -> return max;
+
+    return val;
+}
+
+clampInt(val: i64, min: i64, max: i64) : i64
+{
+    if(val < min) -> return min;
+
+    if(val > max) -> return max;
+
+    return val;
+}

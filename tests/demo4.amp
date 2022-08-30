@@ -1,0 +1,48 @@
+import std::io
+struct s1
+{
+    [constant]
+    x: i32 = 90;
+    y := 90;
+}
+
+union tu1(TypeKind)
+{
+    TYPE_INT: int;
+}
+
+main()
+{
+    s := "sdsdsddsdsd";
+    a: []string = []{"sdmsdm", "mozizsjsdm", "sads", s};
+
+    io::printLn("%", @(cast(* ArrayView) *a));
+
+    slice: []s1 = []{s1{}};
+    slice2: []s1 = []{s1{}};
+
+    if(tu1{90} == tu1{90})
+    {
+        io::printLn("equals");
+    }
+
+    sps: [2] * [2] *int;
+    // match(slice)
+    // {
+    //     slice2 ->-> io::printLn("match equals");
+    // }
+
+    io::printLn("end");
+
+    using import std::stringbuilder;
+
+    sb := StringBuilder{};
+    defer -> sb.free();
+
+    io::readLnToStringBuilder(*sb);
+
+    sb.append("% - %", []{"whatsuppppp"}, slice);
+
+    io::printLn("%", sb.toString());
+
+}

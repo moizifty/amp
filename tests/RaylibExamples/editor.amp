@@ -1,0 +1,90 @@
+import std::io
+import rl = raylib
+import sb = std::stringbuilder
+
+main()
+{
+    using rl;
+    SetConfigFlags(ConfigFlags.WndResizable);
+    InitWindow(1600, 900, "Editor".data);
+    MaximizeWindow();
+    SetTargetFPS(60);
+
+    sourcePanelWidth := 150;
+
+    while(!WindowShouldClose())
+    {
+        BeginDrawing();
+        defer -> EndDrawing();
+        ClearBackground({245, 245, 245});
+
+        (screenW, screenH) := (GetScreenWidth(), GetScreenHeight());
+
+        (drawX, drawY) : tuple(i64, i64) = (0, 0);
+
+        editorDrawSourcePanel(drawX, drawY, sourcePanelWidth, screenH);
+        drawX = drawX + sourcePanelWidth;
+
+        editorDrawTabs({drawX, drawY, 100, 25}, screenW, []{"A", "B", "C", "D", "E", "F", "G", "E", "A", "a", "Aa", "Asa", "sksm", "KSKK", "SDS", "SDMS", "SDSM", "skds", "nsnsnsk"});
+    }
+}
+
+editorDrawSourcePanel(x: i64, y: i64, width: i64, height: i64)
+{
+    rl::gui::WindowBox({x, y, width, height}, "Source Browser");
+}
+
+editorDrawTabs(rect: rl::Rectangle, maxX: i64, files: []string)
+{
+    btnMinWidth := rect.width / 2;
+    drawX := rect.x;
+    
+    drawOverfillScroll := (ifx(files.len * rect.width + drawX > maxX) -> true; else -> false;);    
+    scrollBtnWidth := 20;
+    
+    tabStartIndex := 0;
+    if(drawOverfillScroll)
+    {
+        if(rl::gui::Button({drawX, rect.y, scrollBtnWidth, 25}, "#118#"))
+        {
+            tabStartIndex = tabStartIndex - 1;
+
+            tt: i32 = 0;
+            m := tt - 1;
+            io::printLn("tt: %", m);
+        }
+        drawX = drawX + scrollBtnWidth;
+    }
+
+    for(i in tabStartIndex : files.len - 1)
+    {
+        w := rect.width;
+
+        rl::gui::Button({drawX, rect.y, w, rect.height}, files[i]);
+
+        drawX = drawX + w;
+    }
+
+    if(drawOverfillScroll)
+    {
+        rl::gui::Button({maxX - scrollBtnWidth, rect.y, scrollBtnWidth, 25}, "#119#");
+    }
+}
+
+clampFloat(val: f64, min: f64, max: f64) : f64
+{
+    if(val < min) -> return min;
+
+    if(val > max) -> return max;
+
+    return val;
+}
+
+clampInt(val: i64, min: i64, max: i64) : i64
+{
+    if(val < min) -> return min;
+
+    if(val > max) -> return max;
+
+    return val;
+}

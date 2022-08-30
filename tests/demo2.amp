@@ -1,0 +1,72 @@
+import std::io
+
+struct s1
+{
+    f := 900;
+    i := 12911111;
+    str := "3zmskdms";
+
+    t := (12, "df");
+}
+
+union tu1(TypeKind)
+{
+    TYPE_INT: int;
+    TYPE_FLOAT: float;
+    TYPE_STRING: tuple(int, int, string);
+}
+
+method s1
+{
+    [thisPtr] [fmt]
+    toString() : tuple(string, bool)
+    {
+        using import std::stringbuilder;
+
+        sb := StringBuilder{};
+
+        sb.append("custom: s1{%, %, %, %}", this.f, this.i, this.str, this.t);
+
+        return (sb.toString(), true);
+    }
+}
+
+method any
+{
+    [thisPtr] [fmt]
+    toString() : tuple(string, bool)
+    {
+        using import std::stringbuilder;
+
+        sb := StringBuilder{};
+
+        sb.appendAny(@this);
+
+        return (sb.toString(), true);
+    }
+}
+
+main(args: []string)
+{
+    f := io::openfile("tests/testfile.txt", creation = io::FileCreation.EraseExisting);
+    defer -> f.close();
+
+    using import std::stringbuilder;
+
+    io::printLn("file size before write: % %", f.getSize(), io::stdout.getSize());
+
+    f.write("(%)\n", (tu1{(900, 120, "sdsd")}, typeof(90).kind, []any{9023, 23, 2323, "mioiz", "ssmnds"}, 3.5, args, "sdmsd", false, s1{}));
+
+    io::printLn("file size is now: % %", f.getSize(), io::stdout.getSize());
+
+    using import windows;
+
+    sb := StringBuilder{};
+
+    sb.append("(%)\n", (tu1{(90, 121, "sdms")}, typeof(90).kind, []any{9023, 23, 2323, "mioiz", "ssmnds"}, 3.5, args, "sdmsd", false, s1{}));
+    defer -> sb.free();
+
+    MessageBoxA(null, sb.toString().data, "Hi".data, 0);
+
+    io::printLn("%", main);
+}

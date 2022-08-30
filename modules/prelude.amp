@@ -1,0 +1,173 @@
+namespace prelude
+
+import __c = cstd
+
+//ordering has to be exact and the same values
+//IMPORTANT FOR LLVM BACKEND
+enum TypeKind
+{
+    TYPE_INT =          0;
+    TYPE_FLOAT =        1;
+    TYPE_STRING =       2;
+    TYPE_BOOL =         3;
+    TYPE_ARRAY =        4;
+    TYPE_ENUM =         5;
+    TYPE_ENUM_MEMBER =  6;
+    TYPE_STRUCT =       7;
+    TYPE_UNION =        8;
+    TYPE_TAGGED_UNION = 9;
+    TYPE_POINTER =      10;
+    TYPE_FUNC =         11;
+    TYPE_OPERFUNC =     12;
+    TYPE_VOID =         13;
+    TYPE_NAMESPACE =    14;
+    TYPE_ALIASED =      15;
+    TYPE_TUPLE =        16;
+}
+
+struct string
+{
+    data: *ui8;
+    len: i64;
+}
+
+struct TypeInfo
+{
+    kind : TypeKind;
+    type: TypeUnion;
+
+    size: i64;
+    name: string;
+    
+    toStringFunc: *void;
+}
+
+union TypeUnion
+{
+    arrayType: *TypeInfoArray;
+    enumType: *TypeInfoEnum;
+    structType: *TypeInfoStruct;
+    unionType: *TypeInfoUnion;
+    taggedUnion: *TypeInfoTaggedUnion;
+    pointerType: *TypeInfoPointer;
+    funcType: *TypeInfoFunc;
+    aliasedType: *TypeInfoAliased;
+    tupleType: *TypeInfoTuple;
+}
+
+struct TypeInfoStruct
+{
+    name: string;
+    membs: [] TypeInfoStructMemb;
+}
+struct TypeInfoStructMemb
+{
+    name: string;
+    type: *TypeInfo;
+    offset: ui64;
+}
+
+struct TypeInfoUnion
+{
+    name: string;
+    membs: [] TypeInfoUnionMemb;
+}
+struct TypeInfoUnionMemb
+{
+    name: string;
+    type: *TypeInfo;
+}
+
+struct TypeInfoTaggedUnion
+{
+    name: string;
+    membs: [] TypeInfoUnionMemb;
+    kindMemberOffset: i64;
+    indexInUnionOffset: i64;
+    indexInEnumOffset: i64;
+}
+
+struct TypeInfoArray
+{
+    isSlice: bool;
+    baseType: *TypeInfo;
+    size: i64;
+
+}
+
+struct TypeInfoPointer
+{
+    baseType: *TypeInfo;
+}
+
+struct TypeInfoEnum
+{
+    name: string;
+    membs: [] TypeInfoEnumMemb;
+    maxValue: i64;
+    minValue: i64;
+    isFlagEnum: bool;
+}
+struct TypeInfoEnumMemb
+{
+    name: string;
+    myEnum: *TypeInfo;
+    val: int;
+}
+
+struct TypeInfoFunc
+{
+    params: [] *TypeInfo;
+    retType: *TypeInfo;
+}
+
+struct TypeInfoAliased
+{
+    name: string;
+    baseType: *TypeInfo;
+}
+
+struct TypeInfoTuple
+{
+    types: [] *TypeInfo;
+    offsets: [] i64;
+}
+
+struct any
+{
+    type: *TypeInfo;
+    data: *void;
+}
+
+struct ArrayView
+{
+    len: i64;
+    data: *void;
+    elemSize: i64;
+}
+
+
+
+operator [](s: string, index: i64) : ui8
+{
+    return (ifx(index >= s.len) -> '\0'; else -> s.data[index];);
+}
+
+operator ==(a: string, b: string) : bool
+{
+    if(a.len != b.len) -> return false;
+    
+    if((a.data == b.data) && (a.len == b.len)) -> return true;
+    return __c::strcmp(a.data, b.data) == 0;
+}
+
+operator !=(a: string, b: string) : bool
+{
+    return __c::strcmp(a.data, b.data) != 0;
+}
+
+struct range
+{
+    start: i64;
+    end: i64;
+}
