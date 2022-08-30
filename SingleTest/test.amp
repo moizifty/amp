@@ -1,6 +1,6 @@
-namespace test2::moiz::sd
+import std::io
 
 main()
 {
-    a := 90;
+    io::printLn("%", typeof(TypeKind.TYPE_INT).name);
 }

@@ -66,6 +66,7 @@ struct SymEntry
 
     bool isType;
 
+    bool isUnscopedEnumMemb;
     SymTable *mySymTable;
     Token posInFile;
 

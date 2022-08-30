@@ -4078,8 +4078,8 @@ LLVMValueRef cgLLVMCastExpr(CheckerType *castTo, ASTExpr *expr)
         size_t castingFromSize = checkerTypeGetSize(castingFrom);
         size_t castingToSize = checkerTypeGetSize(castTo);
 
-        bool isCastToIntType = isTypeInteger(castTo) || isTypeEnum(castTo) || isTypeEnumMemb(castTo) || isTypeBoolean(castTo);
-        bool isCastFromIntType = isTypeInteger(castingFrom) || isTypeEnum(castingFrom) || isTypeEnumMemb(castingFrom) || isTypeBoolean(castingFrom);
+        bool isCastToIntType = isTypeInteger(castTo) || isTypeEnum(castTo) || isTypeBoolean(castTo);
+        bool isCastFromIntType = isTypeInteger(castingFrom) || isTypeEnum(castingFrom) || isTypeBoolean(castingFrom);
 
         if(isCastToIntType && isCastFromIntType)
         {

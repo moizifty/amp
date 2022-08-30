@@ -802,7 +802,8 @@ void pass2FillRemainingInfo(ASTDeclLL *aliasesDecls, ASTDeclLL *constsDecls, AST
                     if(*membLL == NULL) *membLL = newEnumMembLL(memb);
                     else addEnumMembLL(membLL, memb);
 
-                    _symTableInsertLocal(st, membName, newCheckerTypeEnumMemb(e->type, val), astEnumMembLL->item->id);
+                    SymEntry *ne = _symTableInsertLocal(st, membName, e->type, astEnumMembLL->item->id);
+                    ne->isUnscopedEnumMemb = true;
                 }
 
                 astEnumMembLL = astEnumMembLL->next;

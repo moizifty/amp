@@ -19,6 +19,7 @@ SymEntry *newSymEntry(char *name, CheckerType *type)
     e->myDecl = NULL;
     e->importIsNamespaceImport = false;
     e->backendValRef = NULL;
+    e->isUnscopedEnumMemb = false;
     
     return e;
 }

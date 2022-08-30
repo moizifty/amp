@@ -1334,7 +1334,8 @@ void checkDeclEnum(ASTDecl *decl, bool isGlobalDecl)
                 if(membLL == NULL) membLL = newEnumMembLL(memb);
                 else addEnumMembLL(&membLL, memb);
 
-                _symTableInsertLocal(st, membName, newCheckerTypeEnumMemb(t, val), astEnumMembLL->item->id);
+                SymEntry *e = _symTableInsertLocal(st, membName, t, astEnumMembLL->item->id);
+                e->isUnscopedEnumMemb = true;
             }
 
             astEnumMembLL = astEnumMembLL->next;
@@ -1947,7 +1948,8 @@ void checkUsingStmt(ASTStmt *stmt)
                     }
                     else
                     {
-                        _symTableInsertLocal(globalContext.cc.checkingLocalsSymTble, enumMembs->item->name, newCheckerTypeEnumMemb(e->checkType, enumMembs->item->val), stmt->startTok);
+                        SymEntry *e = _symTableInsertLocal(globalContext.cc.checkingLocalsSymTble, enumMembs->item->name, enumType, stmt->startTok);
+                        e->isUnscopedEnumMemb = true;
                     }
 
                     enumMembs = enumMembs->next;
@@ -2451,11 +2453,18 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                             expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
                         else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
                     }
-                    else if(isTypeEnumMemb(expr->checkType))
+                    else if(isTypeEnum(expr->checkType))
                     {
-                        expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                        expr->compTimeVal.i = entry->type->enumMembType.val;
-                        expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                        if(entry->isUnscopedEnumMemb)
+                        {
+                            size_t index = 0;
+                            typeHasMember(expr->checkType, entry->name, &index);
+
+                            EnumMembLL *memb = getEnumMembLLAt(entry->type->enumType.membLL, index);
+                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                            expr->compTimeVal.i = memb->item->val;
+                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                        }
                     }
                     else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
                 }
@@ -3808,10 +3817,14 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                                 expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
                             else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
                         }
-                        else if(isTypeEnumMemb(expr->checkType))
+                        else if(isTypeEnum(expr->checkType) && importEntry->isUnscopedEnumMemb)
                         {
+                            size_t index = 0;
+                            typeHasMember(expr->checkType, importEntry->name, &index);
+
+                            EnumMembLL *memb = getEnumMembLLAt(importEntry->type->enumType.membLL, index);
                             expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                            expr->compTimeVal.i = importEntry->type->enumMembType.val;
+                            expr->compTimeVal.i = memb->item->val;
                             expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
                         }
                         else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;

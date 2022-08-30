@@ -333,18 +333,6 @@ CheckerType *newCheckerTypeEnum(EnumMembLL *membLL,char *name, int flags)
     addTypeToTypeTable(t);
     return t;
 }
-CheckerType *newCheckerTypeEnumMemb(CheckerType *enumType, size_t val)
-{
-    CheckerType *t = allocCheckerType(C_TYPE_ENUM_MEMBER);
-    t->enumMembType.enumtype = enumType;
-    t->enumMembType.val = val;
-    t->flags = 0;
-    
-    t->typeId = typeCounter++;
-    
-    addTypeToTypeTable(t);
-    return t;
-}
 CheckerType *newCheckerTypeFunc(ScopedDeclLL *paramLL, CheckerType *ret, bool retAsArg, int flags)
 {
     CheckerType *t = allocCheckerType(C_TYPE_FUNC);
@@ -1081,17 +1069,7 @@ bool isTypeEnum(CheckerType *type)
 
     return false;
 }
-bool isTypeEnumMemb(CheckerType *type)
-{
-    if(type == NULL) return false;
 
-    switch(type->kind)
-    {
-        case C_TYPE_ENUM_MEMBER: return true;
-    }
-
-    return false;
-}
 bool isTypeNamespace(CheckerType *type)
 {
     if(type == NULL) return false;
@@ -1532,7 +1510,6 @@ bool areTypesEqual(CheckerType *a, CheckerType *b)
             return !strcmp(a->namespaceName, b->namespaceName) && !(strcmp(a->taggedUnionType.name, b->taggedUnionType.name));
         }
         case C_TYPE_ENUM: return !(strcmp(a->enumType.name, b->enumType.name)) && !strcmp(a->namespaceName, b->namespaceName);
-        case C_TYPE_ENUM_MEMBER: return areTypesEqual(a->enumMembType.enumtype, b->enumMembType.enumtype);
         case C_TYPE_POINTER: return areTypesEqual(a->pointerType.base, b->pointerType.base);
         case C_TYPE_FUNC: 
         {
@@ -1767,8 +1744,6 @@ bool canImplicitCastToEnum(CheckerType *from, CheckerType *to)
     from = (isTypeAliased(from)) ? getAliasedTypeBase(from) : from;
     to = (isTypeAliased(to)) ? getAliasedTypeBase(to) : to;
 
-    if(isTypeEnumMemb(from)) return areTypesEqual(from->enumMembType.enumtype, to);
-
     return false;
 }
 void printCheckerType(CheckerType *type)
@@ -1863,11 +1838,6 @@ void printCheckerType(CheckerType *type)
         case C_TYPE_ENUM:
         {
             fprintf(stderr, "%s::enum %s", type->namespaceName, type->enumType.name);
-            break;
-        }
-        case C_TYPE_ENUM_MEMBER:
-        {
-            fprintf(stderr, "%s::enum %s", type->enumMembType.enumtype->namespaceName, type->enumMembType.enumtype->enumType.name);
             break;
         }
         case C_TYPE_VOID:
@@ -2258,7 +2228,6 @@ int64_t checkerTypeGetSizeWin(CheckerType *type)
             return type->byteSize = size;
         }break; 
         case C_TYPE_ENUM: return type->byteSize = checkerTypeGetSizeWin(i32Type);
-        case C_TYPE_ENUM_MEMBER: return type->byteSize = checkerTypeGetSizeWin(type->enumMembType.enumtype);
         case C_TYPE_NAMESPACE: return type->byteSize = 0;
         case C_TYPE_FUNC:
         case C_TYPE_POINTER:
@@ -2394,7 +2363,6 @@ int64_t checkerTypeGetAlignmentWin(CheckerType *type)
             return type->alignment = highestAlignment;
         }break; 
         case C_TYPE_ENUM: return type->alignment = checkerTypeGetAlignmentWin(i32Type);
-        case C_TYPE_ENUM_MEMBER: return type->alignment = checkerTypeGetAlignmentWin(type->enumMembType.enumtype);
         case C_TYPE_NAMESPACE: return type->alignment = 0;
         case C_TYPE_FUNC:
         case C_TYPE_POINTER:
@@ -2554,16 +2522,7 @@ char *allocCheckerTypeToString(CheckerType *type)
             
             strcpy(name, buf);
         }break;
-        case C_TYPE_ENUM_MEMBER:
-        {
-            char buf[256] = {0};
 
-            sprintf(buf, "%s", allocCheckerTypeToString(type->enumMembType.enumtype));
-
-            name = malloc(strlen(buf) + 1);
-            
-            strcpy(name, buf);
-        }break;
         case C_TYPE_NAMESPACE:
         {
             char buf[256] = {0};

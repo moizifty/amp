@@ -215,12 +215,6 @@ struct CheckerType
 
         struct
         {
-            CheckerType *enumtype;
-            size_t val;
-        }enumMembType;
-
-        struct
-        {
             ScopedDeclLL *paramLL;
             CheckerType *ret;
             struct ArgABIInfo *retABIInfo;
@@ -353,7 +347,6 @@ CheckerType *newCheckerTypeStruct(ScopedDeclLL *declLL, char *name, int flags);
 CheckerType *newCheckerTypeUnion(ScopedDeclLL *declLL,char *name, int flags);
 CheckerType *newCheckerTypeTaggedUnion(ScopedDeclLL *declLL, char *name, CheckerType *tagEnumType, int flags);
 CheckerType *newCheckerTypeEnum(EnumMembLL *membLL,char *name, int flags);
-CheckerType *newCheckerTypeEnumMemb(CheckerType *enumType, size_t val);
 CheckerType *newCheckerTypeFunc(ScopedDeclLL *paramLL, CheckerType *ret, bool retAsArg, int flags);
 CheckerType *newCheckerTypeVariadic(CheckerType *base);
 CheckerType *newCheckerTypeOperFunc(char *name, ScopedDeclLL *paramLL, CheckerType *ret, int flags);
@@ -405,7 +398,6 @@ bool isTypeStruct(CheckerType *type);
 bool isTypeUnion(CheckerType *type);
 bool isTypeTaggedUnion(CheckerType *type);
 bool isTypeEnum(CheckerType *type);
-bool isTypeEnumMemb(CheckerType *type);
 bool isTypeNamespace(CheckerType *type);
 bool isTypeGeneric(CheckerType *type);
 
