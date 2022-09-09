@@ -1528,26 +1528,8 @@ void checkMatchStmt(ASTStmt *stmt)
 
         char *matchExprIden = allocNewCompilerIden(buf);
 
-        if(globalContext.gc.backend == BACKEND_C)
-        {
-            Token varName = stmt->startTok;
-            varName.type = TOK_IDEN;
-            strcpy(varName.lexeme, matchExprIden);
-
-            ASTDecl *eDecl = newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), matchExprLL->item);
-            eDecl->var.type->checkType = matchExprLL->item->checkType;
-
-            
-            ASTStmt *eDeclStmt = newASTStmtDecl(eDecl);
-            insertBeforeASTStmtLL(globalContext.cc.currStmtBeingChecked, newASTStmtLL(eDeclStmt));
-            
-            _symTableInsertLocal(globalContext.cc.checkingLocalsSymTble, buf2, eDecl->var.type->checkType, eDecl->startTok);
-        }
-        else
-        {
-            SymEntry *e = _symTableInsertLocal(globalContext.cc.checkingLocalsSymTble, buf2, matchExprLL->item->checkType, matchExprLL->item->startTok);
-            stmt->match.matchExprCompilerIdenSymEntry[matchExprTypeListCounter] = e;
-        }
+        SymEntry *e = _symTableInsertLocal(globalContext.cc.checkingLocalsSymTble, buf2, matchExprLL->item->checkType, matchExprLL->item->startTok);
+        stmt->match.matchExprCompilerIdenSymEntry[matchExprTypeListCounter] = e;
 
         matchExprTypeList[matchExprTypeListCounter] = matchExprLL->item->checkType;
         matchExprList[matchExprTypeListCounter] = matchExprLL->item;
@@ -1634,14 +1616,6 @@ void checkMatchStmt(ASTStmt *stmt)
                                             Token exprIden = matchExprList[i]->startTok;
                                             exprIden.type = TOK_IDEN;
                                             strcpy(exprIden.lexeme, matchExprCompilerIdens[i]);
-                                            
-                                            if(globalContext.gc.backend == BACKEND_C)
-                                            {
-                                                s->decl.decl->var.initial = newASTExprMembAccess(newASTExprIden(exprIden), enumType->enumType.taggedUnionMemberAccess.unionMember->name);
-                                                s->decl.decl->var.initial->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-                                                s->decl.decl->var.initial->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                                                s->decl.decl->var.initial->checkType = enumType->enumType.taggedUnionMemberAccess.unionMember->type;
-                                            }
 
                                             s->decl.decl->var.type->checkType = enumType->enumType.taggedUnionMemberAccess.unionMember->type;
                                             s->isTaggedUnionLetDecl = true;

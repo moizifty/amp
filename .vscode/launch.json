@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}\\bin\\compiler.exe",
             "args": [
                 //"${workspaceFolder}\\tests\\raylibexamples\\snake\\main.amp"
-                //"${workspaceFolder}\\SingleTest\\test.amp"
+                "${workspaceFolder}\\SingleTest\\test.amp"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -8,6 +8,7 @@
 #include "lexer.h"
 #include "namespacetable.h"
 #include "platform.h"
+#include "mylib.h"
 
 #define PRINT_FORE_RED  "\033[31m"
 #define PRINT_FORE_BLUE  "\033[38;2;156;220;254m"
@@ -90,6 +91,7 @@ typedef struct GenCodeContext
 
     LLVMBasicBlockRef blockToContinueTo; //when continue appears, what block should it jump to
     LLVMBasicBlockRef blockToBreakTo;
+    HashMapString *stringHashMap;
 }GenCodeContext;
 
 typedef struct GlobalContext

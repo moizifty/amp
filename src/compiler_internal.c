@@ -15,6 +15,7 @@ GenCodeContext newGenCodeContext()
         .generatingTypeMethod = false,
         .typeWhichTypeMethodIsFor = NULL,
         .backend = BACKEND_LLVM,
+        .stringHashMap = NewHashMapString(128),
     };
 }
 

@@ -88,6 +88,7 @@ LLVMValueRef cgLLVMBitcast(LLVMValueRef val, LLVMTypeRef target);
 LLVMValueRef cgLLVMStore(LLVMValueRef toStore, LLVMValueRef ptr, LLVMTypeRef storageType);
 LLVMValueRef cgLLVMLoad(LLVMValueRef toLoad, char *name);
 
+LLVMValueRef cgLLVMCreateCStringConstantFromHashmap(struct HashMapString *hms, char *str, size_t len, bool convertEscapeCharacters);
 LLVMValueRef cgLLVMCreateStringConstantAndGlobal(char *str, size_t len);
 char *cgLLVMStringToLLVMCompatibleString(char *str, size_t *outLen);
 

@@ -12,17 +12,16 @@ enum TypeKind
     TYPE_BOOL =         3;
     TYPE_ARRAY =        4;
     TYPE_ENUM =         5;
-    TYPE_ENUM_MEMBER =  6;
-    TYPE_STRUCT =       7;
-    TYPE_UNION =        8;
-    TYPE_TAGGED_UNION = 9;
-    TYPE_POINTER =      10;
-    TYPE_FUNC =         11;
-    TYPE_OPERFUNC =     12;
-    TYPE_VOID =         13;
-    TYPE_NAMESPACE =    14;
-    TYPE_ALIASED =      15;
-    TYPE_TUPLE =        16;
+    TYPE_STRUCT =       6;
+    TYPE_UNION =        7;
+    TYPE_TAGGED_UNION = 8;
+    TYPE_POINTER =      9;
+    TYPE_FUNC =         10;
+    TYPE_OPERFUNC =     11;
+    TYPE_VOID =         12;
+    TYPE_NAMESPACE =    13;
+    TYPE_ALIASED =      14;
+    TYPE_TUPLE =        15;
 }
 
 struct string

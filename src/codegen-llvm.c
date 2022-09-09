@@ -466,17 +466,16 @@ LLVMValueRef cgLLVMTypeTableEntry(CheckerType *type)
         TYPE_BOOL =         3,
         TYPE_ARRAY =        4,
         TYPE_ENUM =         5,
-        TYPE_ENUM_MEMBER =  6,
-        TYPE_STRUCT =       7,
-        TYPE_UNION =        8,
-        TYPE_TAGGED_UNION = 9,
-        TYPE_POINTER =      10,
-        TYPE_FUNC =         11,
-        TYPE_OPERFUNC =     12,
-        TYPE_VOID =         13,
-        TYPE_NAMESPACE =    14,
-        TYPE_ALIASED =      15,
-        TYPE_TUPLE =        16,
+        TYPE_STRUCT =       6,
+        TYPE_UNION =        7,
+        TYPE_TAGGED_UNION = 8,
+        TYPE_POINTER =      9,
+        TYPE_FUNC =         10,
+        TYPE_OPERFUNC =     11,
+        TYPE_VOID =         12,
+        TYPE_NAMESPACE =    13,
+        TYPE_ALIASED =      14,
+        TYPE_TUPLE =        15,
     }TypeKind;
 
     LLVMTypeRef typeInfoTypeRef = cgLLVMCheckerTypeToTypeRef(typeInfoType, false);
@@ -498,7 +497,6 @@ LLVMValueRef cgLLVMTypeTableEntry(CheckerType *type)
             case C_TYPE_TUPLE: typeKind = TYPE_TUPLE; break;
             case C_TYPE_ARRAY: typeKind = TYPE_ARRAY; break;
             case C_TYPE_ENUM: typeKind = TYPE_ENUM; break;
-            case C_TYPE_ENUM_MEMBER: typeKind = TYPE_ENUM_MEMBER; break;
             case C_TYPE_UNION: typeKind = TYPE_UNION; break;
             case C_TYPE_TAGGED_UNION: typeKind = TYPE_TAGGED_UNION; break;
             case C_TYPE_POINTER: typeKind = TYPE_POINTER; break;
@@ -511,9 +509,7 @@ LLVMValueRef cgLLVMTypeTableEntry(CheckerType *type)
 
     { //type name
         char *typeName = allocCheckerTypeToString(type);
-        LLVMValueRef strData = LLVMConstStringInContext(context, typeName, strlen(typeName), false);
-        LLVMValueRef typeNameGlobal = LLVMAddGlobal(module, LLVMTypeOf(strData), "__typeName");
-        LLVMSetInitializer(typeNameGlobal, strData);
+        LLVMValueRef typeNameGlobal = cgLLVMCreateCStringConstantFromHashmap(globalContext.gc.stringHashMap, typeName, strlen(typeName), false);
 
         LLVMValueRef stringMembs[2] =
         {
@@ -2497,13 +2493,14 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                 size_t len = 0;
                 char *strData = cgLLVMStringToLLVMCompatibleString(expr->compTimeVal.str.data, &len);
 
-                LLVMValueRef globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), expr->compTimeVal.str.realLenExcludingEscapedCharacters + 1), "__strData");
-                LLVMSetGlobalConstant(globStrData, true);
+                // LLVMValueRef globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), expr->compTimeVal.str.realLenExcludingEscapedCharacters + 1), "__strData");
+                // LLVMSetGlobalConstant(globStrData, true);
 
-                LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, expr->compTimeVal.str.realLenExcludingEscapedCharacters, false));
+                // LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, expr->compTimeVal.str.realLenExcludingEscapedCharacters, false));
 
-                LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
+                // LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
 
+                LLVMValueRef globStrData = cgLLVMCreateCStringConstantFromHashmap(globalContext.gc.stringHashMap, strData, len, true);
                 LLVMValueRef stringMembs[2] = 
                 {
                     LLVMConstBitCast(globStrData, LLVMPointerType(LLVMInt8TypeInContext(context), 0)),
@@ -2554,13 +2551,14 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                 {
                     char *strData = expr->compTimeVal.str.data;
 
-                    LLVMValueRef globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), expr->compTimeVal.str.len + 1), "__strData");
-                    LLVMSetGlobalConstant(globStrData, true);
+                    // LLVMValueRef globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), expr->compTimeVal.str.len + 1), "__strData");
+                    // LLVMSetGlobalConstant(globStrData, true);
 
-                    LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, expr->compTimeVal.str.len, false));
+                    // LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, expr->compTimeVal.str.len, false));
 
-                    LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
+                    // LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
 
+                    LLVMValueRef globStrData = cgLLVMCreateCStringConstantFromHashmap(globalContext.gc.stringHashMap, strData, expr->compTimeVal.str.len, true);
                     LLVMValueRef stringMembs[2] = 
                     {
                         LLVMConstBitCast(globStrData, LLVMPointerType(LLVMInt8TypeInContext(context), 0)),
@@ -4243,13 +4241,14 @@ LLVMValueRef cgLLVMSourceLocLit(TokenPos pos)
         char *strData = pos.filename;
         size_t len = strlen(pos.filename);
 
-        LLVMValueRef globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), len + 1), "__strData");
-        LLVMSetGlobalConstant(globStrData, true);
+        // LLVMValueRef globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), len + 1), "__strData");
+        // LLVMSetGlobalConstant(globStrData, true);
 
-        LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, len, false));
+        // LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, len, false));
 
-        LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
+        // LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
 
+        LLVMValueRef globStrData = cgLLVMCreateCStringConstantFromHashmap(globalContext.gc.stringHashMap, strData, len, false);
         LLVMValueRef stringMembs[2] = 
         {
             LLVMConstBitCast(globStrData, LLVMPointerType(LLVMInt8TypeInContext(context), 0)),
@@ -4480,7 +4479,6 @@ LLVMTypeRef cgLLVMCheckerTypeToTypeRef(CheckerType *type, bool isGlobalFuncType)
             }
         }break;
 
-        case C_TYPE_ENUM_MEMBER:
         case C_TYPE_ENUM:
         {
             ret = LLVMInt32TypeInContext(context);
@@ -4632,18 +4630,44 @@ LLVMValueRef cgLLVMLoad(LLVMValueRef toLoad, char *name)
     return LLVMBuildLoad(builder, toLoad, name);
 }
 
+LLVMValueRef cgLLVMCreateCStringConstantFromHashmap(HashMapString *hms, char *str, size_t len, bool convertEscapeCharacters)
+{
+    LLVMValueRef globStrData = NULL;
+    size_t strDataLen = (convertEscapeCharacters) ? 0 : len;
+    char *strData = (convertEscapeCharacters) ? cgLLVMStringToLLVMCompatibleString(str, &strDataLen) : str;
+
+    uint64_t key = fnv1(strData, strDataLen);
+
+    int64_t numInChain = 0;
+    HashMapStringEntryChainLL *stringHashmapEntry = GetEntryChainNodeHashMapStringByVal(globalContext.gc.stringHashMap, key, strData, &numInChain);
+    if(stringHashmapEntry == NULL)
+    {
+        AddToHashMapString(globalContext.gc.stringHashMap, key, strData);
+        stringHashmapEntry = GetEntryChainNodeHashMapStringByVal(globalContext.gc.stringHashMap, key, strData, &numInChain);
+        
+        char buf[BUFSIZ + 1];
+        sprintf(buf, "__strdata%llu_%llu", key, numInChain);
+
+        globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), strDataLen + 1), buf);
+        LLVMSetGlobalConstant(globStrData, true);
+
+        LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, strDataLen, false));
+
+        LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
+
+    }
+    else
+    {
+        char buf[BUFSIZ + 1];
+        sprintf(buf, "__strdata%llu_%llu", key, numInChain);
+        globStrData = LLVMGetNamedGlobal(module, buf);
+    }
+
+    return globStrData;
+}
 LLVMValueRef cgLLVMCreateStringConstantAndGlobal(char *str, size_t len)
 {
-    size_t strDataLen = 0;
-    char *strData = cgLLVMStringToLLVMCompatibleString(str, &strDataLen);
-
-    LLVMValueRef globStrData = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), len + 1), "__strData");
-    LLVMSetGlobalConstant(globStrData, true);
-
-    LLVMSetInitializer(globStrData, LLVMConstStringInContext(context, strData, len, false));
-
-    LLVMSetAlignment(globStrData, LLVMABIAlignmentOfType(targetDataRef, LLVMTypeOf(globStrData)));
-
+    LLVMValueRef globStrData = cgLLVMCreateCStringConstantFromHashmap(globalContext.gc.stringHashMap, str, len, true);
     LLVMValueRef stringMembs[2] = 
     {
         LLVMConstBitCast(globStrData, LLVMPointerType(LLVMInt8TypeInContext(context), 0)),

@@ -1648,7 +1648,6 @@ bool canImplicitCastToInt(CheckerType *from, CheckerType *intType)
         }break;
         case C_TYPE_BOOL: return true;
         case C_TYPE_ENUM: return true;
-        case C_TYPE_ENUM_MEMBER: return true;
         default: return false;
     }
 }

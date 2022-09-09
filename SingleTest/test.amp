@@ -1,6 +1,13 @@
 import std::io
 
+struct s
+{
+    i: int;
+}
 main()
 {
-    io::printLn("%", typeof(TypeKind.TYPE_INT).name);
+
+    io::printLn("%", typeof(io::printLn).name);
+    io::readChar();
+
 }

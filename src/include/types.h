@@ -113,7 +113,6 @@ enum CheckerTypeKind
     C_TYPE_UNION,
     C_TYPE_TAGGED_UNION,
     C_TYPE_ENUM,
-    C_TYPE_ENUM_MEMBER,
     C_TYPE_NAMESPACE,
 
     C_TYPE_TUPLE,
