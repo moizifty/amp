@@ -1773,20 +1773,20 @@ entry:
   %__arrView = alloca %prelude_ArrayView, align 8
   %__anyLit = alloca %prelude_any, align 8
   %__anyLit1 = alloca %prelude_any, align 8
-  %0 = alloca %prelude_TypeInfo, align 8
+  %0 = alloca %prelude_ArrayView, align 8
   %__arrayLit = alloca [1 x %prelude_any], align 8
   %1 = alloca [1 x %prelude_any], align 8
   %2 = getelementptr inbounds %prelude_string, %prelude_string* %_strLit, i32 0, i32 0
   store i8* getelementptr inbounds ([2 x i8], [2 x i8]* @__strdata12638153115695167482_5, i32 0, i32 0), i8** %2, align 8
   %3 = getelementptr inbounds %prelude_string, %prelude_string* %_strLit, i32 0, i32 1
   store i64 1, i64* %3, align 8
-  %4 = load %prelude_TypeInfo, %prelude_TypeInfo* getelementptr inbounds ([414 x %prelude_TypeInfo], [414 x %prelude_TypeInfo]* @__typeTable, i64 0, i64 124), align 8
-  store %prelude_TypeInfo %4, %prelude_TypeInfo* %0, align 8
-  %__anyData = bitcast %prelude_TypeInfo* %0 to i8*
+  %4 = load %prelude_ArrayView, %prelude_ArrayView* getelementptr inbounds ([10 x %prelude_NamespaceInfo], [10 x %prelude_NamespaceInfo]* @__namespaceTable, i64 0, i64 7, i32 1), align 8
+  store %prelude_ArrayView %4, %prelude_ArrayView* %0, align 8
+  %__anyData = bitcast %prelude_ArrayView* %0 to i8*
   %5 = getelementptr inbounds %prelude_any, %prelude_any* %__anyLit1, i32 0, i32 0
   %6 = getelementptr inbounds %prelude_any, %prelude_any* %__anyLit1, i32 0, i32 1
   store i8* %__anyData, i8** %6, align 8
-  store %prelude_TypeInfo* getelementptr inbounds ([414 x %prelude_TypeInfo], [414 x %prelude_TypeInfo]* @__typeTable, i64 0, i64 37), %prelude_TypeInfo** %5, align 8
+  store %prelude_TypeInfo* getelementptr inbounds ([414 x %prelude_TypeInfo], [414 x %prelude_TypeInfo]* @__typeTable, i64 0, i64 114), %prelude_TypeInfo** %5, align 8
   store [1 x %prelude_any] zeroinitializer, [1 x %prelude_any]* %__arrayLit, align 8
   %7 = getelementptr inbounds [1 x %prelude_any], [1 x %prelude_any]* %__arrayLit, i64 0, i64 0
   %8 = bitcast %prelude_any* %7 to i8*

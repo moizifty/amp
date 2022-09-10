@@ -4,5 +4,5 @@ import __runtime
 
 main()
 {
-    std::io::printLn("%", typeof(main));
+    std::io::printLn("%", std::io.files);
 }

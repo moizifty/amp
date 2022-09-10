@@ -3744,85 +3744,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
         }break;
         case A_EXPR_SCOPE_ACCESS:
         {
-            bool temp1 = globalContext.cc.currScopedExpr.isCheckingScopeExpr;
-            Token temp2 = globalContext.cc.currScopedExpr.scopeNameBeingChecked;
-            globalContext.cc.currScopedExpr.isCheckingScopeExpr = true;
-
-            checkExpr(expr->scopeAccess.scopeName, isIncompletePass);
-
-            if(!isTypeNamespace(expr->scopeAccess.scopeName->checkType))
-            {
-                checkerError(expr->startTok, "Invalid use of identifier, the scope expression preceeding '%s' is not a namespace, but is of type: ", expr->scopeAccess.memb.lexeme);
-                printCheckerType(expr->scopeAccess.scopeName->checkType);
-                fprintf(stderr, "\n");
-
-                prettyPrintCheckerSourceError(expr->scopeAccess.scopeName->startTok, expr->scopeAccess.scopeName->endTok);
-            }
-            else
-            {
-                CheckerType *importType = expr->scopeAccess.scopeName->checkType;
-                SymEntry *importEntry = _symTableLookUp(importType->namespaceType.tble, expr->scopeAccess.memb.lexeme, LOOKUP_ALL);
-
-                if(importEntry == NULL)
-                {
-                    checkerError(expr->startTok, "'%s' is not a valid declaration in ", expr->scopeAccess.memb.lexeme);
-                    printCheckerType(importType);
-                    fprintf(stderr, "\n");
-
-                    prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
-                }
-                else
-                {
-                    if(importEntry->isType) importType->namespaceType.tble->belongsToNamespace->isTypesUsed = true;
-                    else 
-                    {
-                        if(importEntry->mySymTable != NULL)
-                        {
-                            if(importEntry->mySymTable->belongsToNamespace != NULL) 
-                            {
-                                if(importEntry->isGlobal || importEntry->isGlobalFunc) importEntry->mySymTable->belongsToNamespace->isOtherSymbolsUsed = true;
-                            }
-                        }
-                    }
-
-                    expr->checkType = importEntry->type;
-                    
-                    if(importEntry->isConst) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                    else if(importEntry->isType) expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
-                    else if(importEntry->isNamespace) 
-                    {
-                        expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
-                        importEntry->type->namespaceType.tble->belongsToNamespace->isImported = true;
-
-                    }
-                    else //if global and local
-                    {
-                        //check if its a function (but not a function pointer), if so,  then set to rvalue
-                        if(isTypeFunction(expr->checkType))
-                        {
-                            if(importEntry->isGlobalFunc)
-                                expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                            else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-                        }
-                        else if(isTypeEnum(expr->checkType) && importEntry->isUnscopedEnumMemb)
-                        {
-                            size_t index = 0;
-                            typeHasMember(expr->checkType, importEntry->name, &index);
-
-                            EnumMembLL *memb = getEnumMembLLAt(importEntry->type->enumType.membLL, index);
-                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                            expr->compTimeVal.i = memb->item->val;
-                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                        }
-                        else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-                    }
-
-                    expr->idenSymEntry = importEntry;
-                }
-            }
-
-            globalContext.cc.currScopedExpr.scopeNameBeingChecked = temp2;
-            globalContext.cc.currScopedExpr.isCheckingScopeExpr = temp1;
+            checkScopeAccessExpr(expr, isIncompletePass);
         }break;
 
         case A_EXPR_FUNC_CALL:
@@ -4615,6 +4537,141 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
         }break;
     }
 }
+void checkScopeAccessExpr(ASTExpr *expr, bool isIncompletePass)
+{
+    bool temp1 = globalContext.cc.currScopedExpr.isCheckingScopeExpr;
+    Token temp2 = globalContext.cc.currScopedExpr.scopeNameBeingChecked;
+    globalContext.cc.currScopedExpr.isCheckingScopeExpr = true;
+
+    if((expr->scopeAccess.scopeName->kind != A_EXPR_SCOPE_ACCESS) && (expr->scopeAccess.scopeName->kind != A_EXPR_IDEN))
+    {
+        checkerErrorLn(expr->startTok, "Invalid use of scope access, the scope expression should be an identifier or another scope access expression");
+        prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+    }
+
+    if(expr->scopeAccess.scopeName->kind == A_EXPR_IDEN)
+    {
+        SymEntry *entry = _symTableLookUp(globalContext.cc.checkingLocalsSymTble, expr->scopeAccess.scopeName->iden.lexeme, LOOKUP_ALL);
+        
+        if(entry == NULL)
+        {
+            entry = _symTableLookUp(globalContext.symTable, expr->scopeAccess.scopeName->iden.lexeme, LOOKUP_ALL);
+            if(entry != NULL)
+            {
+                if(!isTypeFunction(entry->type)) entry = NULL; //try find operator overload
+            }
+        }
+
+        if((expr->scopeAccess.scopeName->checkType != NULL) && (expr->scopeAccess.scopeName->idenSymEntry != NULL)) 
+        {
+            return;
+        }
+
+        if(entry != NULL)
+        {
+            if(entry->mySymTable != NULL)
+            {
+                if(entry->mySymTable->belongsToNamespace != NULL) 
+                {
+                    if(entry->isGlobal || entry->isGlobalFunc) entry->mySymTable->belongsToNamespace->isOtherSymbolsUsed = true;
+                }
+            }
+
+            expr->scopeAccess.scopeName->checkType = entry->type;
+            
+            if((entry->isNamespace))
+            {
+                expr->scopeAccess.scopeName->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
+                entry->type->namespaceType.tble->belongsToNamespace->isImported = true;
+            }
+            else if(!isTypeNamespace(entry->type))
+            {
+                checkerErrorLn(expr->scopeAccess.scopeName->iden, "identifer '%s' is not a namespace", expr->scopeAccess.scopeName->iden.lexeme);
+                prettyPrintCheckerSourceError(expr->scopeAccess.scopeName->startTok, expr->scopeAccess.scopeName->startTok);
+                expr->scopeAccess.scopeName->checkType = NULL;
+            }
+
+            expr->scopeAccess.scopeName->idenSymEntry = entry;
+        }
+        else
+        {
+            checkerErrorLn(expr->scopeAccess.scopeName->iden, "Use of undeclared identifier '%s'", expr->scopeAccess.scopeName->iden.lexeme);
+            prettyPrintCheckerSourceError(expr->scopeAccess.scopeName->startTok, expr->scopeAccess.scopeName->startTok);
+            expr->scopeAccess.scopeName->checkType = NULL;
+        }
+    }
+    else
+    {
+        checkScopeAccessExpr(expr->scopeAccess.scopeName, isIncompletePass);
+    }
+    
+
+    if(isTypeNamespace(expr->scopeAccess.scopeName->checkType))
+    {
+        CheckerType *importType = expr->scopeAccess.scopeName->checkType;
+        SymEntry *importEntry = _symTableLookUp(importType->namespaceType.tble, expr->scopeAccess.memb.lexeme, LOOKUP_ALL);
+
+        if(importEntry == NULL)
+        {
+            checkerError(expr->startTok, "'%s' is not a valid declaration in ", expr->scopeAccess.memb.lexeme);
+            printCheckerType(importType);
+            fprintf(stderr, "\n");
+
+            prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+        }
+        else
+        {
+            if(importEntry->isType) importType->namespaceType.tble->belongsToNamespace->isTypesUsed = true;
+            else 
+            {
+                if(importEntry->mySymTable != NULL)
+                {
+                    if(importEntry->mySymTable->belongsToNamespace != NULL) 
+                    {
+                        if(importEntry->isGlobal || importEntry->isGlobalFunc) importEntry->mySymTable->belongsToNamespace->isOtherSymbolsUsed = true;
+                    }
+                }
+            }
+
+            expr->checkType = importEntry->type;
+            
+            if(importEntry->isConst) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+            else if(importEntry->isType) expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
+            else if(importEntry->isNamespace) 
+            {
+                expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
+                importEntry->type->namespaceType.tble->belongsToNamespace->isImported = true;
+
+            }
+            else //if global and local
+            {
+                //check if its a function (but not a function pointer), if so,  then set to rvalue
+                if(isTypeFunction(expr->checkType))
+                {
+                    if(importEntry->isGlobalFunc)
+                        expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                    else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+                }
+                else if(isTypeEnum(expr->checkType) && importEntry->isUnscopedEnumMemb)
+                {
+                    size_t index = 0;
+                    typeHasMember(expr->checkType, importEntry->name, &index);
+
+                    EnumMembLL *memb = getEnumMembLLAt(importEntry->type->enumType.membLL, index);
+                    expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                    expr->compTimeVal.i = memb->item->val;
+                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                }
+                else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+            }
+
+            expr->idenSymEntry = importEntry;
+        }
+    }
+
+    globalContext.cc.currScopedExpr.scopeNameBeingChecked = temp2;
+    globalContext.cc.currScopedExpr.isCheckingScopeExpr = temp1;
+} 
 void checkConvertUnaryExprToOperFuncCall(ASTExpr *expr, SymEntry *operFuncEntry)
 {
     Token funcIdenTok = expr->startTok;

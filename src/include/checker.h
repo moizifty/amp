@@ -86,6 +86,7 @@ CheckerType *checkIfTupleTypeAlreadyExists(CheckerTypeLL *types);
 CheckerType *checkIfTupleNotExistsCreateNew(CheckerTypeLL *types);
 
 void checkExpr(ASTExpr *expr, bool isIncompletePass);
+void checkScopeAccessExpr(ASTExpr *expr, bool isIncompletePass);
 void checkConvertUnaryExprToOperFuncCall(ASTExpr *expr, SymEntry *operFuncEntry);
 void checkConvertBinaryExprToOperFuncCall(ASTExpr *expr, SymEntry *operFuncEntry);
 void checkConvertIndexRefExprToOperFuncCall(ASTExpr *expr, SymEntry *operFuncEntry);
