@@ -853,7 +853,8 @@ struct ASTProg
 {
     Token startTok;
     Token endTok;
-
+    char *filename;
+    
     ASTNamespaceName *namespace;
     ASTNamespaceWithBlock *withBlock;
     

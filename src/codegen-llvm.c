@@ -118,6 +118,31 @@ void cgLLVMEntireProgram(TypeTable *typeTable, NamespaceTable *namespaceTable)
         }
     }
 
+    //emit namespace table data global
+    {
+        size_t numNamespaces = namespaceTable->entries->first->numItems;
+        LLVMTypeRef nsInfoTypeRef = cgLLVMCheckerTypeToTypeRef(namespaceInfoType, false);
+        LLVMTypeRef nsTableGlobalType = LLVMArrayType(nsInfoTypeRef, numNamespaces);
+        LLVMValueRef nsTableGlobal = LLVMAddGlobal(module, nsTableGlobalType, "__namespaceTable");
+
+        LLVMSetAlignment(nsTableGlobal, LLVMABIAlignmentOfType(targetDataRef, nsTableGlobalType));
+
+        LLVMValueRef *initializerElems = malloc(sizeof(LLVMValueRef) * numNamespaces);
+
+        NSTEntryLL *currNSLL = namespaceTable->entries->first;
+
+        for(size_t i = 0; i < numNamespaces; i++)
+        {
+            initializerElems[i] = cgLLVMNSTableEntry(currNSLL->item);
+            currNSLL->item->indexInNamespaceTable = i;
+            currNSLL = currNSLL->next;
+        }
+
+        LLVMValueRef initializer = LLVMConstArray(nsInfoTypeRef, initializerElems, numNamespaces);
+
+        LLVMSetInitializer(nsTableGlobal, initializer);
+    }
+
     //emit typetable global
     {
 
@@ -456,6 +481,62 @@ void cgLLVMNamespaceTable(NamespaceTable *nsTable)
         }
     } 
 }
+
+LLVMValueRef cgLLVMNSTableEntry(NSTEntry *entry)
+{
+    LLVMTypeRef nsInfoTypeRef = cgLLVMCheckerTypeToTypeRef(namespaceInfoType, false);
+    char *nsName = allocNamespaceNameWithoutUnderscores(entry);
+
+    size_t numFiles = (entry->progASTs != NULL) ? entry->progASTs->first->numItems : 0;
+
+    LLVMValueRef nsNameStr = cgLLVMCreateStringConstantAndGlobal(nsName, strlen(nsName), false);
+    LLVMValueRef filesArray = LLVMAddGlobal(module, LLVMArrayType(cgLLVMCheckerTypeToTypeRef(stringType, false), numFiles), "");
+    
+    LLVMValueRef filesArrayView;
+
+    if(numFiles != 0)
+    {
+        { //create enum memb array
+
+            LLVMValueRef *initElems = malloc(sizeof(LLVMValueRef) * numFiles);
+
+            ASTProgLL *currProgLL = entry->progASTs->first;
+            size_t index = 0;
+            while(currProgLL != NULL)
+            {
+                LLVMValueRef strData = cgLLVMCreateStringConstantAndGlobal(currProgLL->item->filename, strlen(currProgLL->item->filename), false);
+
+                initElems[index] = strData;
+                
+                index++;
+                currProgLL = currProgLL->next;
+            }
+
+            LLVMSetInitializer(filesArray, LLVMConstArray(cgLLVMCheckerTypeToTypeRef(stringType, false), initElems, numFiles));
+        }
+
+        { //create array view
+
+            LLVMValueRef arrViewInit[] =
+            {
+                LLVMConstInt(LLVMInt64TypeInContext(context), numFiles, false),
+                LLVMConstBitCast(filesArray, LLVMPointerType(LLVMInt8TypeInContext(context), 0)),
+                LLVMConstInt(LLVMInt64TypeInContext(context), LLVMABISizeOfType(targetDataRef, cgLLVMCheckerTypeToTypeRef(stringType, false)), false),
+            };
+
+            filesArrayView = LLVMConstNamedStruct(cgLLVMCheckerTypeToTypeRef(arrayViewType, false), arrViewInit, 3);
+        }
+    }
+    else filesArrayView = LLVMConstNull(cgLLVMCheckerTypeToTypeRef(arrayViewType, false));
+
+    LLVMValueRef membs[2] = 
+    {
+        nsNameStr,
+        filesArrayView,
+    };
+
+    return LLVMConstNamedStruct(nsInfoTypeRef, membs, 2);
+}
 LLVMValueRef cgLLVMTypeTableEntry(CheckerType *type)
 {
     typedef enum TypeKind
@@ -615,7 +696,7 @@ LLVMValueRef cgLLVMTypeTableEntryTypeUnion(CheckerType *type)
 
                     LLVMValueRef stctInit[] =
                     {
-                        cgLLVMCreateStringConstantAndGlobal(currMembLL->item->name, strlen(currMembLL->item->name)),
+                        cgLLVMCreateStringConstantAndGlobal(currMembLL->item->name, strlen(currMembLL->item->name), true),
                         cgLLVMTypesTypeEntry(type),
                         LLVMConstInt(cgLLVMCheckerTypeToTypeRef(intType, false), currMembLL->item->val, false),
                     };
@@ -693,7 +774,7 @@ LLVMValueRef cgLLVMTypeTableEntryTypeUnion(CheckerType *type)
 
                     LLVMValueRef stctInit[] =
                     {
-                        cgLLVMCreateStringConstantAndGlobal(currMembLL->item->name.lexeme, strlen(currMembLL->item->name.lexeme)),
+                        cgLLVMCreateStringConstantAndGlobal(currMembLL->item->name.lexeme, strlen(currMembLL->item->name.lexeme), true),
                         cgLLVMTypesTypeEntry(currMembLL->item->type),
                         LLVMConstInt(LLVMInt64TypeInContext(context), LLVMOffsetOfElement(targetDataRef, structGeneratingForTypeRef, index) , false),
                     };
@@ -762,7 +843,7 @@ LLVMValueRef cgLLVMTypeTableEntryTypeUnion(CheckerType *type)
 
                     LLVMValueRef stctInit[] =
                     {
-                        cgLLVMCreateStringConstantAndGlobal(currMembLL->item->name.lexeme, strlen(currMembLL->item->name.lexeme)),
+                        cgLLVMCreateStringConstantAndGlobal(currMembLL->item->name.lexeme, strlen(currMembLL->item->name.lexeme), true),
                         cgLLVMTypesTypeEntry(currMembLL->item->type),
                     };
 
@@ -2584,6 +2665,10 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
         case A_EXPR_SCOPE_ACCESS:
         case A_EXPR_IDEN:
         {
+            if(isTypeNamespace(expr->checkType))
+            {
+                return cgLLVMNSTypeNSEntry(expr->checkType);
+            }
             if(expr->idenSymEntry->backendValRef != NULL) return expr->idenSymEntry->backendValRef;
             if(expr->idenSymEntry->myDecl)
             {
@@ -3044,7 +3129,21 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                         }
                     }
                 }
+                else if(isTypeNamespace(accessableType))
+                {
+                    LLVMValueRef lhs = cgLLVMExpr(expr->membAccess.typeName);
+                    if(lhs != NULL)
+                    {
+                        accessableType = namespaceInfoType;
 
+                        size_t indexOfMember = 0;
+                        typeHasMember(accessableType, expr->membAccess.memb.lexeme, &indexOfMember);
+
+                        LLVMValueRef ptrToMemb = LLVMBuildStructGEP(builder, lhs, indexOfMember, "");
+
+                        return ptrToMemb;
+                    }
+                }
             }
         }break;
         case A_EXPR_POST:
@@ -3957,7 +4056,7 @@ LLVMValueRef cgLLVMAnyLit(ASTExpr *expr)
             LLVMValueRef anyLit = cgLLVMAllocAligned(cgLLVMCheckerTypeToTypeRef(anyType, false), "__anyLit");
             LLVMValueRef dataExpr = cgLLVMExpr(expr);
 
-            ret = cgLLVMAnyLitFromValueRef(dataExpr, expr->checkType);
+            ret = cgLLVMAnyLitFromValueRef(dataExpr, (isTypeNamespace(expr->checkType)) ? namespaceInfoType : expr->checkType);
 
         }break;
     }
@@ -4507,6 +4606,10 @@ LLVMTypeRef cgLLVMCheckerTypeToTypeRef(CheckerType *type, bool isGlobalFuncType)
         {
             ret = cgLLVMTaggedUnionFromCheckerType(type);
         }break;
+        case C_TYPE_NAMESPACE:
+        {
+            ret = cgLLVMCheckerTypeToTypeRef(namespaceInfoType, false);
+        }break;
         default:
         {
             ret = LLVMInt128TypeInContext(context);
@@ -4530,6 +4633,20 @@ void cgLLVMAppendAndSwitchToBlock(LLVMValueRef fnRef, LLVMBasicBlockRef block)
         LLVMPositionBuilderAtEnd(builder, block);
     }
 
+}
+LLVMValueRef cgLLVMNSTypeNSEntry(CheckerType *type)
+{
+    LLVMValueRef nsTableGlobal = LLVMGetNamedGlobal(module, "__namespaceTable");
+
+    LLVMValueRef inds[2] =
+    {
+        LLVMConstInt(LLVMInt64TypeInContext(context), 0, false),
+        LLVMConstInt(LLVMInt64TypeInContext(context), type->namespaceType.tble->belongsToNamespace->indexInNamespaceTable, false),
+    };
+    
+    LLVMValueRef v = LLVMBuildInBoundsGEP(builder, nsTableGlobal, inds, 2, "");
+
+    return v;
 }
 LLVMValueRef cgLLVMTypesTypeEntry(CheckerType *type)
 {
@@ -4665,9 +4782,9 @@ LLVMValueRef cgLLVMCreateCStringConstantFromHashmap(HashMapString *hms, char *st
 
     return globStrData;
 }
-LLVMValueRef cgLLVMCreateStringConstantAndGlobal(char *str, size_t len)
+LLVMValueRef cgLLVMCreateStringConstantAndGlobal(char *str, size_t len, bool convertEscapeCharacter)
 {
-    LLVMValueRef globStrData = cgLLVMCreateCStringConstantFromHashmap(globalContext.gc.stringHashMap, str, len, true);
+    LLVMValueRef globStrData = cgLLVMCreateCStringConstantFromHashmap(globalContext.gc.stringHashMap, str, len, convertEscapeCharacter);
     LLVMValueRef stringMembs[2] = 
     {
         LLVMConstBitCast(globStrData, LLVMPointerType(LLVMInt8TypeInContext(context), 0)),

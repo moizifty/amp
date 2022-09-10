@@ -145,7 +145,11 @@ struct ArrayView
     elemSize: i64;
 }
 
-
+struct NamespaceInfo
+{
+    fullName: string;
+    files: []string;
+}
 
 operator [](s: string, index: i64) : ui8
 {

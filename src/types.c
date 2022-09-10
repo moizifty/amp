@@ -28,6 +28,7 @@ CheckerType *variadicType = NULL;
 CheckerType *anyType = NULL;
 CheckerType *arrayViewType = NULL;
 CheckerType *typeInfoType = NULL;
+CheckerType *namespaceInfoType = NULL;
 CheckerType *stringType = NULL;
 CheckerType *rangeType = NULL;
 

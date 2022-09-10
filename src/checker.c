@@ -2707,14 +2707,27 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                 }
                 else if(isTypeNamespace(membAccessLeftSideType))
                 {
-                    SymEntry *e = _symTableLookUp(membAccessLeftSideType->namespaceType.tble, expr->membAccess.memb.lexeme, LOOKUP_ALL);
-
-                    if(e == NULL)
+                    size_t index = 0;
+                    bool found = typeHasMember(namespaceInfoType, expr->membAccess.memb.lexeme, &index);
+                   
+                    if(!found)
                     {
-                        checkerErrorLn(expr->startTok, "identifier '%s' in namespace '%s', not found", 
-                                    expr->membAccess.memb.lexeme,  membAccessLeftSideType->namespaceType.namespace);
+                        checkerError(expr->startTok, "Type ");
+                        printCheckerType(namespaceInfoType);
+                        fprintf(stderr, " has not got member '%s'\n", expr->membAccess.memb.lexeme);
                     }
-                    else expr->checkType = e->type;
+                    else
+                    {
+                        ScopedDeclLL *dll = namespaceInfoType->structType.declLL;
+
+                        ScopedDecl *d = getScopedDeclLLAt(dll, index)->item;
+
+                        expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+                        if(CHECK_SCOPED_DECL_FLAG(d, SCOPED_DECL_CONST)) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                        else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+
+                        expr->checkType = d->type;
+                    }
                 }
                 else if(isTypeArray(membAccessLeftSideType))
                 {
@@ -4732,34 +4745,6 @@ void checkCastExpr(CheckerType *castTo, ASTExpr *wholeExpr, ASTExpr *exprToCast)
                     wholeExpr->compTimeVal.kind = A_EXPR_COMP_TIME_FLOAT;
                 }
             }break;
-        }
-    }
-
-    if(areTypesEqual(castTo, anyType) && (exprToCast->compTimeVal.isL_or_RValue == EXPR_R_VALUE))
-    {
-        if(globalContext.gc.backend == BACKEND_C)
-        {
-            char *anyLitName = allocNewAnyLitIden();
-            
-            if(globalContext.cc.currStmtBeingChecked != NULL)
-            {
-                Token varName = exprToCast->startTok;
-                varName.type = TOK_IDEN;
-                strcpy(varName.lexeme, anyLitName);
-
-                ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), exprToCast));
-                varDeclStmt->decl.decl->var.type->checkType = exprToCast->checkType;
-
-                ASTStmtLL *varDeclToInsert = newASTStmtLL(varDeclStmt);
-
-                insertBeforeASTStmtLL(globalContext.cc.currStmtBeingChecked, varDeclToInsert);
-            }
-            else //for expressiosn which are default values for params and struct membs
-            {
-                wholeExpr->genAnyCastForDefaultValueExpr = true;
-            } 
-
-            exprToCast->genIdenName = anyLitName;
         }
     }
 }

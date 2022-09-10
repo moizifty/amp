@@ -1,13 +1,8 @@
 import std::io
+import std
+import __runtime
 
-struct s
-{
-    i: int;
-}
 main()
 {
-
-    io::printLn("%", typeof(io::printLn).name);
-    io::readChar();
-
+    std::io::printLn("%", typeof(main));
 }

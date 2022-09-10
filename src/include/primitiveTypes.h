@@ -23,6 +23,7 @@ extern CheckerType *voidType;
 extern CheckerType *anyType;
 extern CheckerType *arrayViewType;
 extern CheckerType *typeInfoType;
+extern CheckerType *namespaceInfoType;
 
 extern CheckerType *rangeType;
 #endif

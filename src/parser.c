@@ -362,7 +362,8 @@ ASTProg *prog(SymTable *tbl)
     p = newASTProg(namespace, withBlock, isNamespaced, tags, decls);
     p->myNSTEntry = entry;
     p->tbl = declsTable;
-
+    p->filename = strdup(globalContext.pc.currFileName);
+    
     collectDecls(p, decls);
     resetLexer();
 

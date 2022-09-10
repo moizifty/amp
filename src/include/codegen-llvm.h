@@ -25,6 +25,7 @@ void initLLVMCodeGen();
 
 void cgLLVMNamespaceTableDoAllTypes(NamespaceTable *nsTable);
 void cgLLVMNamespaceTable(NamespaceTable *nsTable);
+LLVMValueRef cgLLVMNSTableEntry(NSTEntry *entry);
 LLVMValueRef cgLLVMTypeTableEntry(CheckerType *type);
 LLVMValueRef cgLLVMTypeTableEntryTypeUnion(CheckerType *type);
 
@@ -80,6 +81,7 @@ void cgLLVMAddParameterAttributes(LLVMValueRef fnRef, ArgABIInfo *abiInfo, bool 
 LLVMTypeRef cgLLVMCheckerTypeToTypeRef(CheckerType *type, bool isGlobalFuncType);
 
 void cgLLVMAppendAndSwitchToBlock(LLVMValueRef fnRef, LLVMBasicBlockRef block);
+LLVMValueRef cgLLVMNSTypeNSEntry(CheckerType *type);
 LLVMValueRef cgLLVMTypesTypeEntry(CheckerType *type);
 LLVMValueRef cgLLVMPossibleLValueToRValue(LLVMValueRef val, LLVMTypeRef rvalueType);
 LLVMValueRef cgLLVMAlloc(LLVMTypeRef type, char *name, size_t alignment);
@@ -89,7 +91,7 @@ LLVMValueRef cgLLVMStore(LLVMValueRef toStore, LLVMValueRef ptr, LLVMTypeRef sto
 LLVMValueRef cgLLVMLoad(LLVMValueRef toLoad, char *name);
 
 LLVMValueRef cgLLVMCreateCStringConstantFromHashmap(struct HashMapString *hms, char *str, size_t len, bool convertEscapeCharacters);
-LLVMValueRef cgLLVMCreateStringConstantAndGlobal(char *str, size_t len);
+LLVMValueRef cgLLVMCreateStringConstantAndGlobal(char *str, size_t len, bool convertEscapeCharacter);
 char *cgLLVMStringToLLVMCompatibleString(char *str, size_t *outLen);
 
 #endif

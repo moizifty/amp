@@ -27,6 +27,7 @@ struct NSTEntry
     size_t numLinkerLibs;
 
     bool __checkingImportLinkerLibs;
+    size_t indexInNamespaceTable; //in backend output
 };
 
 struct NSTEntryLL

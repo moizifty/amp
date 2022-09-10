@@ -47,6 +47,7 @@ void checkEntireProgram(void)
     SymEntry *anyTypeEntry  = _symTableLookupType(globalContext.preludeNSEntry->namespaceSymTable, "any");
     SymEntry *arrayViewTypeEntry  = _symTableLookupType(globalContext.preludeNSEntry->namespaceSymTable, "ArrayView");
     SymEntry *typeInfoTypeEntry  = _symTableLookupType(globalContext.preludeNSEntry->namespaceSymTable, "TypeInfo");
+    SymEntry *namespaceInfoTypeEntry  = _symTableLookupType(globalContext.preludeNSEntry->namespaceSymTable, "NamespaceInfo");
     SymEntry *stringTypeEntry  = _symTableLookupType(globalContext.preludeNSEntry->namespaceSymTable, "string");
     SymEntry *rangeTypeEntry  = _symTableLookupType(globalContext.preludeNSEntry->namespaceSymTable, "range");
     
@@ -61,6 +62,10 @@ void checkEntireProgram(void)
     if(typeInfoTypeEntry == NULL)
         fprintf(stderr, "Failed to import the prelude module\n");
     else typeInfoType = typeInfoTypeEntry->type;
+
+    if(namespaceInfoTypeEntry == NULL)
+        fprintf(stderr, "Failed to import the prelude module\n");
+    else namespaceInfoType = namespaceInfoTypeEntry->type;
 
     if(stringTypeEntry == NULL)
         fprintf(stderr, "Failed to import the prelude module\n");
