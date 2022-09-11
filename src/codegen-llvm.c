@@ -2665,10 +2665,17 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
         case A_EXPR_SCOPE_ACCESS:
         case A_EXPR_IDEN:
         {
-            if(isTypeNamespace(expr->checkType))
+            if(areTypesEqual(expr->checkType, namespaceInfoType))
             {
-                return cgLLVMNSTypeNSEntry(expr->checkType);
+                if(expr->idenSymEntry != NULL)
+                {
+                    if(expr->idenSymEntry->isNamespace || isTypeNamespace(expr->idenSymEntry->type))
+                    {
+                        return cgLLVMNSTypeNSEntry(expr->idenSymEntry->type);
+                    }
+                }
             }
+
             if(expr->idenSymEntry->backendValRef != NULL) return expr->idenSymEntry->backendValRef;
             if(expr->idenSymEntry->myDecl)
             {
@@ -3448,9 +3455,11 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
 
                 case '&':
                 case '|':
+                case '^':
                 {
                     bool isOr = (expr->binary.op.type == '|');
-                    if(isTypeInteger(expr->binary.l->checkType))
+                    bool isXOr = (expr->binary.op.type == '^');
+                    if(isTypeInteger(expr->binary.l->checkType) || isTypeBoolean(expr->binary.l->checkType))
                     {
                         LLVMValueRef lhs = cgLLVMExpr(expr->binary.l);
                         LLVMValueRef rhs = cgLLVMExpr(expr->binary.r);
@@ -3461,10 +3470,12 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                             rhs = cgLLVMLoad(rhs, "");
                             if(isOr)
                                 return LLVMBuildOr(builder, lhs, rhs, "ibitwiseor");
-                            else return LLVMBuildOr(builder, lhs, rhs, "ibitwiseand");
+                            else if(isXOr)
+                                return LLVMBuildXor(builder, lhs, rhs, "ibitwisexor");
+                            else return LLVMBuildAnd(builder, lhs, rhs, "ibitwiseand");
                         }
                     }
-                }
+                }break;
 
                 case TOK_OR_LOGOP:
                 case TOK_AND_LOGOP:
@@ -3545,6 +3556,31 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                     if((rhs != NULL) && (lhs != NULL))
                     {
                         return cgLLVMBuildEqWithValueS(expr->binary.op.type, lhs, rhs, expr->binary.l->checkType, expr->binary.r->checkType);
+                    }
+                }break;
+
+                case TOK_RIGHT_SHIFT:
+                case TOK_LEFT_SHIFT:
+                {
+                    bool isRight = (expr->binary.op.type == TOK_RIGHT_SHIFT);
+                    if(isTypeInteger(expr->binary.l->checkType))
+                    {
+                        LLVMValueRef lhs = cgLLVMExpr(expr->binary.l);
+                        LLVMValueRef rhs = cgLLVMExpr(expr->binary.r);
+
+                        bool typeIsUnsigned = CHECK_TYPE_FLAG(expr->binary.l->checkType, TYPE_UNSIGNED_FLAG);
+
+                        if((lhs != NULL) && (rhs != NULL))
+                        {
+                            lhs = cgLLVMLoad(lhs, "");
+                            rhs = cgLLVMLoad(rhs, "");
+                            if(isRight)
+                            {
+                                if(typeIsUnsigned) return LLVMBuildLShr(builder, lhs, rhs, "ilshr");
+                                else return LLVMBuildAShr(builder, lhs, rhs, "iashr");
+                            }
+                            else return LLVMBuildShl(builder, lhs, rhs, "ishl");
+                        }
                     }
                 }break;
             }

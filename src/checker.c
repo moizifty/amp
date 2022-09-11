@@ -3396,7 +3396,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                                 {
                                     if(isAnd) expr->compTimeVal.i = (*lhs)->compTimeVal.i & (*rhs)->compTimeVal.i;
                                     else if(isOr) expr->compTimeVal.i = (*lhs)->compTimeVal.i | (*rhs)->compTimeVal.i;
-                                    else if(isOr) expr->compTimeVal.i = (*lhs)->compTimeVal.i ^ (*rhs)->compTimeVal.i;
+                                    else if(isXor) expr->compTimeVal.i = (*lhs)->compTimeVal.i ^ (*rhs)->compTimeVal.i;
                                 }break;
                             }
 
@@ -3744,7 +3744,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
         }break;
         case A_EXPR_SCOPE_ACCESS:
         {
-            checkScopeAccessExpr(expr, isIncompletePass);
+            checkScopeAccessExpr(expr, isIncompletePass, false);
         }break;
 
         case A_EXPR_FUNC_CALL:
@@ -4537,7 +4537,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
         }break;
     }
 }
-void checkScopeAccessExpr(ASTExpr *expr, bool isIncompletePass)
+void checkScopeAccessExpr(ASTExpr *expr, bool isIncompletePass, bool isRecursing)
 {
     bool temp1 = globalContext.cc.currScopedExpr.isCheckingScopeExpr;
     Token temp2 = globalContext.cc.currScopedExpr.scopeNameBeingChecked;
@@ -4602,7 +4602,7 @@ void checkScopeAccessExpr(ASTExpr *expr, bool isIncompletePass)
     }
     else
     {
-        checkScopeAccessExpr(expr->scopeAccess.scopeName, isIncompletePass);
+        checkScopeAccessExpr(expr->scopeAccess.scopeName, isIncompletePass, true);
     }
     
 
@@ -4633,7 +4633,9 @@ void checkScopeAccessExpr(ASTExpr *expr, bool isIncompletePass)
                 }
             }
 
-            expr->checkType = importEntry->type;
+            if((importEntry->isNamespace || isTypeNamespace(importEntry->type)) && !isRecursing)
+                expr->checkType = namespaceInfoType;
+            else expr->checkType = importEntry->type;
             
             if(importEntry->isConst) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
             else if(importEntry->isType) expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
