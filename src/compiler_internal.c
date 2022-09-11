@@ -379,6 +379,21 @@ int64_t stringToInteger(char *str)
 
         return num;
     }
+    else if((str[0] == '0') && (str[1] == 'b'))
+    {
+        //binary number
+        int64_t num = 0;
+        char *numStr = str + 2;
+
+        while(*numStr != '\0')
+        {
+            num = (num * 2) + binDigitToInteger(*numStr);
+
+            numStr++;
+        }
+
+        return num;
+    }
     else return atoll(str);
 }
 
@@ -413,6 +428,17 @@ int hexDigitToInteger(int ch)
     }
 
     return 0;
+}
+
+int binDigitToInteger(int ch)
+{
+    switch(ch)
+    {
+        case '0': return 0;
+        case '1': return 1;
+    }
+
+    return -1;
 }
 
 char *convertFilePathToCFriendly(char *filePath)

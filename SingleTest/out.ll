@@ -1784,7 +1784,7 @@ entry:
   %0 = alloca %tuple310, align 4
   %__arrayLit = alloca [1 x %prelude_any], align 8
   %1 = alloca [1 x %prelude_any], align 8
-  store i32 15, i32* %a, align 4
+  store i32 1, i32* %a, align 4
   %2 = load i32, i32* %a, align 4
   %iashr = ashr i32 %2, 1
   store i32 %iashr, i32* %b, align 4

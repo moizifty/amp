@@ -858,6 +858,7 @@ LEX_START:
             int len = 0;
             bool seenDot = false;
             bool parsedHexDigit = false;
+            bool parsedBinDigit = false;
 
             if(ch == '0')
             {
@@ -876,6 +877,18 @@ LEX_START:
 
                         while(ch == '_') advanceChar(); 
                     }while(isxdigit(ch));
+                }
+                else if(ch == 'b')
+                {
+                    parsedBinDigit = true;
+                    do
+                    {       
+                        if(len < MAX_IDEN_LEN)
+                            t.lexeme[len++] = ch;
+                        advanceChar();
+
+                        while(ch == '_') advanceChar(); 
+                    }while((ch == '0') || (ch == '1'));
                 }
             }
 

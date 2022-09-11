@@ -184,6 +184,7 @@ int64_t stringToInteger(char *str);
 char *stringToLower(char *str);
 
 int hexDigitToInteger(int ch);
+int binDigitToInteger(int ch);
 
 char *sourceAsString(Token startTok, Token endToken);
 char *allocNamespaceNameWithoutUnderscores(struct NSTEntry *entry);
