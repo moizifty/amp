@@ -1,7 +1,7 @@
 namespace std::io
 
 import c = cstd //only for malloc and free
-import w = windows
+import w = os::windows
 import std::stringbuilder
 
 struct file

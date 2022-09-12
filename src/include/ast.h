@@ -85,6 +85,7 @@ enum ASTExprKind
     A_EXPR_BINARY,
     A_EXPR_RANGE,
     A_EXPR_MEMBER_ACCESS, //UNION/STRUCT MEMEMBER ACCESS
+    A_EXPR_NULL_ACCESS, //UNION/STRUCT MEMEMBER ACCESS
     A_EXPR_TYPE_INTRO,
     A_EXPR_EXPR_INTRO,
     A_EXPR_ASSTRING,
@@ -938,6 +939,7 @@ ASTExpr *newASTExprIden(Token iden);
 ASTExpr *newASTExprFuncCall(ASTExpr *iden, ASTNamedExprLL *args);
 ASTExpr *newASTExprArrayRef(ASTExpr *iden, ASTExpr *index);
 ASTExpr *newASTExprMembAccess(ASTExpr *typeName, Token memb);
+ASTExpr *newASTExprNullAccess(ASTExpr *typeName, Token memb);
 ASTExpr *newASTExprScopeAccess(ASTExpr *scopeName, Token memb);
 ASTExpr *newASTExprPost(Token op, ASTExpr *expr);
 

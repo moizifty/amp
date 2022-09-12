@@ -1,4 +1,7 @@
-namespace test2
+namespace global with 
+{
+    libs = "gdi32";
+}
 
 someFunc()
 {

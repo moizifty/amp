@@ -2625,10 +2625,23 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
             }
         }break;
 
+        case A_EXPR_NULL_ACCESS:
         case A_EXPR_MEMBER_ACCESS:
         {
             checkExpr(expr->membAccess.typeName, isIncompletePass);
 
+            if(expr->kind == A_EXPR_NULL_ACCESS)
+            {
+                if(!isTypePointer(expr->membAccess.typeName->checkType))
+                {
+                    checkerError(expr->membAccess.typeName->startTok, "Expression on LHS of '?.' operator must be a pointer type instead got ");
+                    printCheckerType(expr->membAccess.typeName->checkType);
+                    fprintf(stderr, "\n");
+
+                    prettyPrintCheckerSourceError(expr->membAccess.typeName->startTok, expr->membAccess.typeName->endTok);
+                }
+            }
+            
             bool wasEnum = false;
             CheckerType *membAccessLeftSideType = expr->membAccess.typeName->checkType;
             

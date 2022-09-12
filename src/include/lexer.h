@@ -92,6 +92,7 @@ typedef enum
 
     TOK_SCOPE_ACCESS,
     TOK_WITH_KW,
+    TOK_NULL_ACCESS_OP,
     TOK_EOF,
 }TokType;
 

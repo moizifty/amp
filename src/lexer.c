@@ -308,6 +308,40 @@ LEX_START:
 
             return t;
         }
+        else if(ch == '?')
+        {
+            advanceChar();
+            if(ch == '.')
+            {
+                strcpy(t.lexeme, "?.");
+                t.type = TOK_NULL_ACCESS_OP;
+
+                advanceChar();
+                t.pos = (TokenPos)
+                {
+                    .linenum = linenum,
+                    .colnum = colnum,
+                    .fileBufPos = bufPos,
+                    .fileBufferIndex = fileBufIndex,
+                };
+                strcpy(t.pos.filename, globalContext.pc.currFileName);
+
+                return t;
+            }
+            t.lexeme[0] = '?';
+            t.lexeme[1] = '\0';
+            t.type = '?';
+            t.pos = (TokenPos)
+            {
+                .linenum = linenum,
+                .colnum = colnum,
+                .fileBufPos = bufPos,
+                .fileBufferIndex = fileBufIndex,
+            };
+            strcpy(t.pos.filename, globalContext.pc.currFileName);
+
+            return t;
+        }
         else if(ch == '=')
         {
             advanceChar();

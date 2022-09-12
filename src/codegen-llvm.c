@@ -3007,6 +3007,7 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                 return LLVMBuildStructGEP(builder, lhs, index, "");
             }
         }break;
+        case A_EXPR_NULL_ACCESS:
         case A_EXPR_MEMBER_ACCESS:
         {
             
@@ -3082,13 +3083,15 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                     }
                 }
                 else if(isTypePointer(accessableType))
-                {
+                {   
+
                     LLVMValueRef lhs = cgLLVMExpr(expr->membAccess.typeName);
                     if(lhs != NULL)
                     {
                         accessableType = isTypeAliased(accessableType) ? getAliasedTypeBase(accessableType) : accessableType;
                         accessableType = accessableType->pointerType.base;
                         LLVMTypeRef expectedLHSType = LLVMPointerType(cgLLVMCheckerTypeToTypeRef(accessableType, false), 0);
+                        LLVMValueRef valToRet;
 
                         lhs = cgLLVMPossibleLValueToRValue(lhs, expectedLHSType);
 
@@ -3097,9 +3100,7 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                             size_t indexOfMember = 0;
                             typeHasMember(accessableType, expr->membAccess.memb.lexeme, &indexOfMember);
 
-                            LLVMValueRef ptrToMemb = LLVMBuildStructGEP(builder, lhs, indexOfMember, "");
-
-                            return ptrToMemb;
+                            valToRet = LLVMBuildStructGEP(builder, lhs, indexOfMember, "");
                         }
                         else if(isTypeUnion(accessableType))
                         {
@@ -3108,10 +3109,17 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
 
                             ScopedDecl *membAtIndex = getScopedDeclLLAt(accessableType->unionType.declLL, indexOfMember)->item;
 
-                            LLVMValueRef v = LLVMBuildBitCast(builder, lhs, LLVMPointerType(cgLLVMCheckerTypeToTypeRef(membAtIndex->type, false), 0), "unionAccess");
-
-                            return v;
+                            valToRet = LLVMBuildBitCast(builder, lhs, LLVMPointerType(cgLLVMCheckerTypeToTypeRef(membAtIndex->type, false), 0), "unionAccess");
                         }
+
+                        if(expr->kind == A_EXPR_NULL_ACCESS)
+                        {
+                            LLVMValueRef rhsComp = cgLLVMBitcast(LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(context), 0)), cgLLVMCheckerTypeToTypeRef(expr->membAccess.typeName->checkType, false));
+                            LLVMValueRef compExpr = cgLLVMBuildEqWithValueS(TOK_EQ_RELOP, lhs, rhsComp, expr->membAccess.typeName->checkType, expr->membAccess.typeName->checkType);
+
+                            valToRet = LLVMBuildSelect(builder, compExpr, LLVMConstNull(cgLLVMCheckerTypeToTypeRef(expr->checkType, false)), valToRet, "nullaccess");
+                        }
+                        return valToRet;
                     }
                 }
                 else if(isTypeArray(accessableType))

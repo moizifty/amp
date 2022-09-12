@@ -1,8 +1,18 @@
-import std
+import std::io
+import w = os::windows
 
 main()
 {
-    a : *string = null
+    ret := w::MessageBoxA(null, "hiii".data, "whatsup".data, 1 | 2);
 
-    std::io::print("%", c);
+    if(ret == 6)
+    {
+        io::print("hiiii");
+    }
+
+    c: *string = null;
+    n := c?.data;
+
+    io::print("sds\n");
+    io::print("%", n);
 }

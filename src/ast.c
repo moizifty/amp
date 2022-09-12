@@ -470,6 +470,16 @@ ASTExpr *newASTExprMembAccess(ASTExpr *typeName, Token memb)
     
     return e;
 }
+ASTExpr *newASTExprNullAccess(ASTExpr *typeName, Token memb)
+{
+    ASTExpr *e = allocASTExpr(A_EXPR_NULL_ACCESS, typeName->startTok);
+    e->membAccess.typeName = typeName;
+    e->membAccess.memb = memb;
+    e->membAccess.isMethodAccess = false;
+    
+    return e;
+}
+
 ASTExpr *newASTExprScopeAccess(ASTExpr *scopeName, Token memb)
 {
     ASTExpr *e = allocASTExpr(A_EXPR_SCOPE_ACCESS, scopeName->startTok);
