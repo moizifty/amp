@@ -1982,6 +1982,7 @@ char *allocOperFuncName(Token op, ScopedDeclLL *params, CheckerType *retType)
         case TOK_EQ_RELOP: strcpy(buf, OPERFUNC_EQ_OP_NAME "_"); break;
         case TOK_NEQ_RELOP: strcpy(buf, "N" OPERFUNC_EQ_OP_NAME "_"); break;
         case '[': strcpy(buf, OPERFUNC_INDEX_OP_NAME "_"); break;
+        case '?': strcpy(buf, OPERFUNC_NULL_OP_NAME "_"); break;
         default: return NULL;
     }
 
@@ -2032,6 +2033,7 @@ char *allocOperFuncNameFromTypes(TokType op, CheckerType *a, CheckerType *b)
         case TOK_EQ_RELOP: strcpy(buf, OPERFUNC_EQ_OP_NAME "_"); break;
         case TOK_NEQ_RELOP: strcpy(buf, "N" OPERFUNC_EQ_OP_NAME "_"); break;
         case '[': strcpy(buf, OPERFUNC_INDEX_OP_NAME "_"); break;
+        case '?': strcpy(buf, OPERFUNC_NULL_OP_NAME "_"); break;
         default: return NULL;
     }
 

@@ -3194,6 +3194,33 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
         {
             switch(expr->binary.op.type)
             {
+                case '?':
+                {
+                    LLVMValueRef lhs = cgLLVMExpr(expr->binary.l);
+                    LLVMValueRef rhs = cgLLVMExpr(expr->binary.r);
+
+                    LLVMValueRef rhsComp = (isTypeBoolean(expr->binary.l->checkType)) ? 
+                                            LLVMConstInt(cgLLVMCheckerTypeToTypeRef(boolType, false), false, false) :
+                                            cgLLVMBitcast(LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(context), 0)), cgLLVMCheckerTypeToTypeRef(expr->binary.l->checkType, false));
+
+                    LLVMValueRef compExpr = cgLLVMBuildEqWithValueS(TOK_EQ_RELOP, lhs, rhsComp, expr->binary.l->checkType, expr->binary.l->checkType);
+                    
+                    return LLVMBuildSelect(builder, compExpr, rhs, lhs, "nullcoal");
+                    // if(isTypeInteger(expr->binary.l->checkType) && isTypeInteger(expr->binary.r->checkType))
+                    // {
+
+                    //     if((lhs != NULL) && (rhs != NULL))
+                    //     {
+                    //         lhs = cgLLVMLoad(lhs, "");
+                    //         rhs = cgLLVMLoad(rhs, "");
+                            
+                    //         if(isAdd) return LLVMBuildAdd(builder, lhs, rhs, "iadd");
+                            
+                    //         return LLVMBuildSub(builder, lhs, rhs, "isub");
+                    //     }
+                    // }
+                }break;
+
                 case '-':
                 case '+': 
                 {

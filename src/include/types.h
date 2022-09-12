@@ -48,6 +48,7 @@
 #define OPERFUNC_EQ_OP_NAME         "EQUAL"
 #define OPERFUNC_NEQ_OP_NAME        "NEQUAL"
 #define OPERFUNC_INDEX_OP_NAME      "INDEX"
+#define OPERFUNC_NULL_OP_NAME      "NULLOP"
 
 typedef struct CheckerType CheckerType;
 typedef enum CheckerTypeKind CheckerTypeKind;

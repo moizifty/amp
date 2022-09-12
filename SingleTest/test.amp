@@ -2,7 +2,7 @@ import std
 
 main()
 {
-    a := 0b1;
-    b := a >> 1;
-    std::io::printLn("%", (a, b));
+    a : *string = null
+
+    std::io::print("%", c);
 }

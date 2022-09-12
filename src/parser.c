@@ -863,7 +863,7 @@ ASTDecl *operatorDecl(void)
            (tok.type == '>') || (tok.type == '<') || 
            (tok.type == TOK_GE_RELOP) || (tok.type == TOK_LE_RELOP) ||
            (tok.type == TOK_EQ_RELOP) || (tok.type == TOK_NEQ_RELOP) ||
-           (tok.type == '['))
+           (tok.type == '[') || (tok.type == '?'))
         {
             op = tok;
             tok = lex();
@@ -2118,6 +2118,31 @@ ASTGenericTypeLL *genericTypeLL(void)
 }
 
 ASTExpr *expr(void)
+{
+    ASTExpr *e = NULL;
+    if(tok.type == TOK_EOF)
+        return e;
+
+    e = logOpExpr();
+
+    e->endTok = tok;
+
+    while(tok.type == '?') //null coalessing operator
+    {
+        Token op = tok;
+        tok = lex();
+
+        ASTExpr *eRight = logOpExpr();
+        eRight->endTok = tok;
+
+        e = newASTExprBinary(op, e, eRight);
+        e->endTok = tok;
+
+    }
+
+    return e;
+}
+ASTExpr *logOpExpr(void)
 {
     ASTExpr *e = NULL;
     if(tok.type == TOK_EOF)

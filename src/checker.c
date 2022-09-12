@@ -3068,6 +3068,57 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
             {
                 switch(expr->binary.op.type)
                 {
+                    case '?':
+                    {
+                        CheckerType *typeOfLHSandRHS = (*lhs)->checkType;
+
+                        if(!lEqualOrCastableToR && !rEqualOrCastableTol)
+                        {
+                            checkerError(expr->startTok, "Invalid types to preform '%s' binary operator, LHS type: ", expr->binary.op.lexeme);
+                            printCheckerType((*lhs)->checkType);
+                            fprintf(stderr, ", RHS type: ");
+                            printCheckerType((*rhs)->checkType);
+                            fprintf(stderr, "\n");
+
+                            prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+                        }
+                        else if(!isTypePointerOrFunction(typeOfLHSandRHS) && !isTypeBoolean(typeOfLHSandRHS))
+                        {
+                            //todo maybe handle oepratoro overload funcs here
+                            checkerError(expr->startTok, "Expected valid types to preform '%s' binary operator, instead trying to preform '%s' on two expressions of type: ", 
+                                         expr->binary.op.lexeme, expr->binary.op.lexeme);
+
+                            printCheckerType(typeOfLHSandRHS);
+                            fprintf(stderr, "\n");
+
+                            prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+                        }
+                        else if(!IS_EXPR_COMPTIME_KIND((*lhs), A_EXPR_COMP_TIME_RUNTIME) && 
+                                !IS_EXPR_COMPTIME_KIND((*rhs), A_EXPR_COMP_TIME_RUNTIME))
+                        {
+                            //lhs and rhs comptime value kind should be the same at this point since theyve been cast
+                            expr->compTimeVal.kind = (*lhs)->compTimeVal.kind;
+                            switch((*lhs)->compTimeVal.kind)
+                            {
+                                case A_EXPR_COMP_TIME_BOOL:
+                                {
+                                    expr->compTimeVal.i = ((*lhs)->compTimeVal.i) ? (*lhs)->compTimeVal.i : (*rhs)->compTimeVal.i;
+                                }break;
+
+                            }
+
+                            expr->checkType = (*lhs)->checkType;
+                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                        }
+                        else
+                        {
+                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+                            expr->checkType = (*lhs)->checkType;
+                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                        }
+
+                    }break;
+
                     case '+': case '-':
                     {
                         bool isAdd = (expr->binary.op.type == '+');

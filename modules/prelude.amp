@@ -169,6 +169,11 @@ operator !=(a: string, b: string) : bool
     return __c::strcmp(a.data, b.data) != 0;
 }
 
+operator ?(a: string, b: string) : string
+{
+    return (ifx(a == "") -> b; else -> b;);
+}
+
 struct range
 {
     start: i64;

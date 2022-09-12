@@ -83,6 +83,7 @@ ASTGenericType *genericType(void);
 ASTGenericTypeLL *genericTypeLL(void);
 
 ASTExpr *expr(void);
+ASTExpr *logOpExpr(void);
 ASTExpr *rangeTerm(void);
 ASTExpr *bitTerm(void);
 ASTExpr *relEqTerm(void);
