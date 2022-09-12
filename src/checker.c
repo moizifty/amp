@@ -2641,7 +2641,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                     prettyPrintCheckerSourceError(expr->membAccess.typeName->startTok, expr->membAccess.typeName->endTok);
                 }
             }
-            
+
             bool wasEnum = false;
             CheckerType *membAccessLeftSideType = expr->membAccess.typeName->checkType;
             
@@ -2850,6 +2850,20 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                     fprintf(stderr, "\n");
                     prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
                 }
+
+                if((expr->kind == A_EXPR_NULL_ACCESS) && (expr->membAccess.nullAccess.elseExpr != NULL))
+                {
+                    if(!checkRHSExprWithTypeAndCast(expr->checkType, &(expr->membAccess.nullAccess.elseExpr), true, isIncompletePass))
+                    {
+                        checkerError(expr->membAccess.typeName->startTok, "Else expressions type should be equal or castable to members type, expected type ");
+                        printCheckerType(expr->checkType);
+                        fprintf(stderr, " but got type ");
+                        printCheckerType(expr->membAccess.nullAccess.elseExpr->checkType);
+                        fprintf(stderr, "\n");
+                        prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+                    }
+                }
+                
             }
         }break;
 

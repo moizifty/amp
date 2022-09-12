@@ -10,8 +10,9 @@ main()
         io::print("hiiii");
     }
 
+    d := "sdsd";
     c: *string = null;
-    n := c?.data;
+    n := c?.data else cast(*ui8) *d;
 
     io::print("sds\n");
     io::print("%", n);

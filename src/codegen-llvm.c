@@ -3117,7 +3117,9 @@ LLVMValueRef cgLLVMExpr(ASTExpr *expr)
                             LLVMValueRef rhsComp = cgLLVMBitcast(LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(context), 0)), cgLLVMCheckerTypeToTypeRef(expr->membAccess.typeName->checkType, false));
                             LLVMValueRef compExpr = cgLLVMBuildEqWithValueS(TOK_EQ_RELOP, lhs, rhsComp, expr->membAccess.typeName->checkType, expr->membAccess.typeName->checkType);
 
-                            valToRet = LLVMBuildSelect(builder, compExpr, LLVMConstNull(cgLLVMCheckerTypeToTypeRef(expr->checkType, false)), valToRet, "nullaccess");
+                            LLVMValueRef bckupValueToEmit = (expr->membAccess.nullAccess.elseExpr == NULL) ? LLVMConstNull(cgLLVMCheckerTypeToTypeRef(expr->checkType, false)):
+                                                                                                             cgLLVMExpr(expr->membAccess.nullAccess.elseExpr);
+                            valToRet = LLVMBuildSelect(builder, compExpr, bckupValueToEmit, valToRet, "nullaccess");
                         }
                         return valToRet;
                     }

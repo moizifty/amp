@@ -2316,8 +2316,20 @@ ASTExpr *postExprTerm(void)
         else if(tok.type == TOK_NULL_ACCESS_OP)
         {
             tok = lex();
-            e = newASTExprNullAccess(e, tok);
-            if(tok.type == TOK_IDEN) tok = lex();
+            Token iden = tok;
+            if(tok.type == TOK_IDEN) 
+            {
+                ASTExpr *elseExpr = NULL;
+
+                tok = lex();
+                if(tok.type == TOK_ELSE_KW)
+                {
+                    tok = lex();
+                    elseExpr = expr();
+                }
+                
+                e = newASTExprNullAccess(e, iden, elseExpr);
+            }
             else parserError(tok, "Expected an identifier for null access but instead got %s", tok.lexeme);
         }
         else if(tok.type == '(')
