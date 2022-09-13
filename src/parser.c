@@ -1346,10 +1346,10 @@ ASTStmt *stmt(void)
             else 
             {
                 if(tok.type == '=')
-            {
-                tok = lex();
-                r = expr();
-            }
+                {
+                    tok = lex();
+                    r = expr();
+                }
                 if(tok.type == ';') 
                 {
                     tok = lex();
@@ -1801,25 +1801,15 @@ ASTType *typeSpec(void)
         case '[': t = arrayTypeSpec(); break;
         case '*': t = pointerTypeSpec(); break;
         case '(': t = funcTypeSpec(); break;
-        case '.':
+        case TOK_2_DOTS:
         {
             Token startTok = tok;
             tok = lex();
-            if(tok.type == '.')
-            {
-                tok = lex();
-                if(tok.type == '.')
-                {
-                    tok = lex();
+            
+            if(tok.type == '?') tok = lex();
+            ASTType *base = typeSpec();
 
-                    if(tok.type == '?') tok = lex();
-                    ASTType *base = typeSpec();
-
-                    t = newASTTypeVariadic(startTok, base);
-                }
-                else parserError(tok, "Expected a '...' for variadic type but instead got '..%s'", tok.lexeme);
-            }
-            else parserError(tok, "Expected a '...' for variadic type but instead got '.%s'", tok.lexeme);
+            t = newASTTypeVariadic(startTok, base);
         }break;
         case TOK_STRUCT_KW: t = newASTTypeIden(tok); tok = lex(); break;
         case TOK_UNION_KW: t = newASTTypeIden(tok); tok = lex(); break;
@@ -2541,6 +2531,23 @@ ASTExpr *primaryTerm(void)
         }
         else parserError(tok, "Expected matching ']' for array literal - [size]basetype{expressions}, instead got '%s'", tok.lexeme);
     }
+    else if((tok.type == '.'))
+    {
+        Token startTok = tok;
+        Token iden;
+
+        tok = lex();
+
+        if(tok.type == TOK_IDEN)
+        {
+            iden = tok;
+            tok = lex();
+
+            e = newASTExprEnumInferLit(startTok, iden);
+        }
+        else parserError(tok, "Expected an identifer for enum infer literal, instead got '%s'", tok.lexeme);
+
+    }
     else parserError(tok, "Expected a valid expression but got %s", tok.lexeme);
     return e;
 }
@@ -2586,8 +2593,8 @@ ASTExpr *blockExpr(bool belongsToExprConstruct)
             parserError(b->stmts->item->startTok, "Expected expression statement at the end of a block expression");
         }
     }
-    else parserError(startTok, "Expected atleast one statement in block expression, but got none");
-    
+    else parserError(startTok, "Expected atleast one statement in block expression, but got none");    
+
     return newASTExprBlock(b);
 }
 ASTExpr *ifExpr(void)
@@ -2863,20 +2870,10 @@ ASTNamedExpr *namedExpr(void)
     ASTExpr *e = NULL;
     bool isVariadicArrayArg = false;
 
-    if(tok.type == '.')
+    if(tok.type == TOK_2_DOTS)
     {
         tok = lex();
-        if(tok.type == '.')
-        {
-            tok = lex();
-            if(tok.type == '.')
-            {
-                tok = lex();
-                isVariadicArrayArg = true;
-            }
-            else parserError(tok, "Unexpected '.', did you mean '...' for passing a array as entire variadic argument.");
-        }
-        else parserError(tok, "Unexpected '.', did you mean '...' for passing a array as entire variadic argument.");
+        isVariadicArrayArg = true;
     }
 
     e = expr();
@@ -2885,27 +2882,17 @@ ASTNamedExpr *namedExpr(void)
     {
         if(isVariadicArrayArg)
         {
-            parserError(tok, "Unexpected '...', since argument is being passed with a name, '...' should be before the rhs expression");
+            parserError(tok, "Unexpected '..', since argument is being passed with a name, '..' should be before the rhs expression");
         }
 
         tok = lex();
 
         if(e->kind == A_EXPR_IDEN)
         {
-            if(tok.type == '.')
+            if(tok.type == TOK_2_DOTS)
             {
                 tok = lex();
-                if(tok.type == '.')
-                {
-                    tok = lex();
-                    if(tok.type == '.')
-                    {
-                        tok = lex();
-                        isVariadicArrayArg = true;
-                    }
-                    else parserError(tok, "Unexpected '.', did you mean '...' for passing a array as entire variadic argument.");
-                }
-                else parserError(tok, "Unexpected '.', did you mean '...' for passing a array as entire variadic argument.");
+                isVariadicArrayArg = true;
             }
 
             n = newASTNamedExprNamed(e->iden, expr());

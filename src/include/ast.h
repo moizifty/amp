@@ -78,6 +78,7 @@ typedef struct ASTNamespaceName ASTNamespaceName;
 enum ASTExprKind
 {
     A_EXPR_LIT,
+    A_EXPR_ENUM_INFER_LIT,
     A_EXPR_IDEN,
     A_EXPR_FUNC_CALL,
     A_EXPR_INDEX_REF,
@@ -940,6 +941,7 @@ void freeASTType(ASTType **type);
 
 ASTExpr *newASTExprLit(Token lit);
 ASTExpr *newASTExprIden(Token iden);
+ASTExpr *newASTExprEnumInferLit(Token startTok, Token iden);
 
 ASTExpr *newASTExprFuncCall(ASTExpr *iden, ASTNamedExprLL *args);
 ASTExpr *newASTExprArrayRef(ASTExpr *iden, ASTExpr *index);

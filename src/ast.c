@@ -441,6 +441,14 @@ ASTExpr *newASTExprIden(Token iden)
 
     return e;
 }
+ASTExpr *newASTExprEnumInferLit(Token startTok, Token iden)
+{
+    ASTExpr *e = allocASTExpr(A_EXPR_ENUM_INFER_LIT, startTok);
+    e->iden = iden;
+    e->endTok = iden;
+
+    return e;
+}
 
 ASTExpr *newASTExprFuncCall(ASTExpr *iden, ASTNamedExprLL *args)
 {

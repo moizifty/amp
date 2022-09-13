@@ -19,7 +19,7 @@ method StringBuilder
 {
     [thisPtr]
     {
-        append(fmt: string, va: ...any)
+        append(fmt: string, va: ..any)
         {
             vaIndex := 0;
             for(i in 0:fmt.len - 1)

@@ -99,14 +99,14 @@ method file
         w::CloseHandle(cast(* void)(this.handle));
     }
 
-    write(fmt: string, va: ...any) : ui32
+    write(fmt: string, va: ..any) : ui32
     {
         using import std::stringbuilder;
         
         sb := StringBuilder{};
         defer -> sb.free();
 
-        sb.append(fmt, ...va);
+        sb.append(fmt, ..va);
 
         numWritten := this.writeBytes(sb.toString().data, sb.len);
 
@@ -164,14 +164,14 @@ method file
     }
 }
 
-print(fmt: string, va: ...any)
+print(fmt: string, va: ..any)
 {
-    stdout.write(fmt, ...va);
+    stdout.write(fmt, ..va);
 }
 
-printLn(fmt: string = "", va: ...any)
+printLn(fmt: string = "", va: ..any)
 {
-    print(fmt, ...va);
+    print(fmt, ..va);
     print("\n");
 }
 

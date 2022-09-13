@@ -1,19 +1,33 @@
 import std::io
 import w = os::windows
 
+enum e1
+{
+    A;
+    B;
+    C;
+}
+
 main()
 {
-    ret := w::MessageBoxA(null, "hiii".data, "whatsup".data, 1 | 2);
+    const a := 10;
 
-    if(ret == 6)
+    b: [a]*int;
+
+    for(num in b)
     {
-        io::print("hiiii");
+        io::print("num %");
+    }
+}
+
+sum<T>(arr: ..T) : T
+{
+    s: T;
+
+    for(val in arr)
+    {
+        s = s + val;
     }
 
-    d := "sdsd";
-    c: *string = null;
-    n := c?.data else cast(*ui8) *d;
-
-    io::print("sds\n");
-    io::print("%", n);
+    return s;
 }

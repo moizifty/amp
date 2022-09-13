@@ -1,10 +1,10 @@
 namespace cstd
 
 [foreign("msvcrt")]
-printf(fmt: *ui8, va: ...any) : i64;
+printf(fmt: *ui8, va: ..any) : i64;
 
 [foreign("msvcrt")]
-_snprintf(out: *ui8, bufsize: i64, fmt: *ui8, va: ...any);
+_snprintf(out: *ui8, bufsize: i64, fmt: *ui8, va: ..any);
 
 [foreign("msvcrt")]
 malloc(size: i64) : *void;

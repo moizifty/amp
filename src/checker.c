@@ -2304,6 +2304,11 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
 
     switch(expr->kind)
     {
+        case A_EXPR_ENUM_INFER_LIT:
+        {
+            checkerErrorLn(expr->startTok, "Cannot infer type of enum in context");
+            prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+        }break;
         case A_EXPR_LIT:
         {
             switch(expr->lit.type)
@@ -2413,8 +2418,9 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                     expr->compTimeVal = entry->constVal;
                 }
                 else if(entry->isType) expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
-                else if(entry->isNamespace) 
+                else if(entry->isNamespace || isTypeNamespace(entry->type)) 
                 {
+                    expr->checkType = namespaceInfoType;
                     expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
                     entry->type->namespaceType.tble->belongsToNamespace->isImported = true;
                 }
@@ -2427,18 +2433,15 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                             expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
                         else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
                     }
-                    else if(isTypeEnum(expr->checkType))
+                    else if(isTypeEnum(expr->checkType) && entry->isUnscopedEnumMemb)
                     {
-                        if(entry->isUnscopedEnumMemb)
-                        {
-                            size_t index = 0;
-                            typeHasMember(expr->checkType, entry->name, &index);
+                        size_t index = 0;
+                        typeHasMember(expr->checkType, entry->name, &index);
 
-                            EnumMembLL *memb = getEnumMembLLAt(entry->type->enumType.membLL, index);
-                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                            expr->compTimeVal.i = memb->item->val;
-                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                        }
+                        EnumMembLL *memb = getEnumMembLLAt(entry->type->enumType.membLL, index);
+                        expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                        expr->compTimeVal.i = memb->item->val;
+                        expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
                     }
                     else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
                 }
@@ -4892,6 +4895,46 @@ bool checkInferredExpr(CheckerType *inferredType, ASTExpr **expr, bool shouldIns
 
     switch(e->kind)
     {
+        case A_EXPR_ENUM_INFER_LIT:
+        {
+            castExpression = false;
+
+            if(!isTypeEnum(inferredType))
+            {
+                checkerError(e->startTok, "Expected enum type to given in context to inferring the enum literal but instead got ");
+                printCheckerType(inferredType);
+                fprintf(stderr, "\n");
+                prettyPrintCheckerSourceError(e->startTok, e->endTok);
+            }
+            else
+            {
+                CheckerType *enumType = isTypeAliased(inferredType) ? getAliasedTypeBase(inferredType) : inferredType;
+                char *iden = e->iden.lexeme;
+
+                size_t membIndex = 0;
+                bool foundMember = typeHasMember(enumType, iden, &membIndex);
+
+                if(!foundMember)
+                {
+                    checkerError(e->iden, "Member '%s', does not exist in enum type: ", iden);
+                    printCheckerType(enumType);
+                    fprintf(stderr, "\n");
+
+                    prettyPrintCheckerSourceError(e->startTok, e->endTok);
+                }
+                else
+                {
+                    EnumMembLL *memb = getEnumMembLLAt(enumType->enumType.membLL, membIndex);
+
+                    e->checkType = enumType;//newCheckerTypeEnumMemb(entry->type, 0);
+                    e->compTimeVal.i = memb->item->val;
+                    e->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                    e->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                }
+
+            }
+        }break;
+
         case A_EXPR_ARRAY_LITERAL:
         {
             if(areTypesEqual(inferredType, anyType))
