@@ -10,24 +10,10 @@ enum e1
 
 main()
 {
-    const a := 10;
+    a := "sdsd";
+    b: *string = *a;
 
-    b: [a]*int;
+    c: *void = cast (*void)b ? cast(*void) *b; 
 
-    for(num in b)
-    {
-        io::print("num %");
-    }
-}
-
-sum<T>(arr: ..T) : T
-{
-    s: T;
-
-    for(val in arr)
-    {
-        s = s + val;
-    }
-
-    return s;
+    io::print("asda %", @cast(*string) c);
 }
