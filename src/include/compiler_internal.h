@@ -93,6 +93,8 @@ typedef struct GenCodeContext
     LLVMBasicBlockRef blockToBreakTo;
     HashMapString *stringHashMap;
 
+    char **linkerArgs;
+    char numLinkerArgs;
     char* outputName;
 }GenCodeContext;
 

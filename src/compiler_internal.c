@@ -17,6 +17,8 @@ GenCodeContext newGenCodeContext()
         .backend = BACKEND_LLVM,
         .stringHashMap = NewHashMapString(128),
         .outputName = "out",
+        .linkerArgs = NULL,
+        .numLinkerArgs = 0,
     };
 }
 

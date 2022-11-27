@@ -17,7 +17,7 @@
 #define PARSE_CMDLINE_MSG_PREFIX_USAGE  "Usage"
 
 #define CMDLINE_BACKEND_ID    (0)
-#define CMDLINE_LINKLIB_ID    (1)
+#define CMDLINE_LINKARG_ID    (1)
 #define CMDLINE_OUT_ID    (2)
 #define CMDLINE_CREATE_OUT_DIR_ID    (2)
 
@@ -83,21 +83,34 @@ SourceFilesList *parseCmdLineArgs(int argc, char **argv, CmdLineArg *possibleCmd
                 parseCmdLineError(PARSE_CMDLINE_MSG_PREFIX_ERROR, "Expected value for argument '%s'", currArg);
             }
         }
-        else if(!strcmp(currArg, "-lib"))
+        else if(!strcmp(currArg, "-linkArgs"))
         {
-            CmdLineArg c = possibleCmdLineArgs[CMDLINE_LINKLIB_ID];
+            CmdLineArg c = possibleCmdLineArgs[CMDLINE_LINKARG_ID];
 
             if(nextArg != NULL)
             {
-                addLinkerLibToGlobalContext(&globalContext, nextArg);
+                globalContext.gc.linkerArgs = malloc(sizeof(char *) * argc - i);
 
-                i += 1;
-                continue;
+                while(nextArg != NULL)
+                {
+                    globalContext.gc.linkerArgs[globalContext.gc.numLinkerArgs++] = nextArg;
+
+                    i++;
+                    nextArg = argv[i + 1];
+                }    
             }
-            else 
-            {
-                parseCmdLineError(PARSE_CMDLINE_MSG_PREFIX_ERROR, "Expected value for argument '%s'", currArg);
-            }
+
+            // if(nextArg != NULL)
+            // {
+            //     addLinkerLibToGlobalContext(&globalContext, nextArg);
+
+            //     i += 1;
+            //     continue;
+            // }
+            // else 
+            // {
+            //     parseCmdLineError(PARSE_CMDLINE_MSG_PREFIX_ERROR, "Expected value for argument '%s'", currArg);
+            // }
         }
         else if(!strcmp(currArg, "-out"))
         {
@@ -236,9 +249,9 @@ int main(int argc, char **argv)
             .help = "This setting specifies the backend used by the compiler, 'C' sets the compiler to emit C code, 'LLVM' set the compiler to emit LLVM IR, eg '-backend=llvm'",
         },
 
-        [CMDLINE_LINKLIB_ID] = 
+        [CMDLINE_LINKARG_ID] = 
         {
-            .help = "This setting specifies a library to link, eg '-lib kernel32",
+            .help = "This setting specifies linker args",
         },
         
         [CMDLINE_OUT_ID] = 
@@ -336,15 +349,28 @@ int main(int argc, char **argv)
             addLinkerLibsFromNamespaceTableToGlobalContext(globalContext.namespaceTable, &globalContext);
             
             size_t numDefaultLinkerArgs = sizeof(defaultLinkerArgs)/sizeof(defaultLinkerArgs[0]);
-            size_t numLinkerArgs = (numDefaultLinkerArgs + globalContext.numLinkerLibs + 1);  //plus 1 for null at the end
+            size_t numLinkerArgs = (numDefaultLinkerArgs + globalContext.numLinkerLibs + globalContext.gc.numLinkerArgs + 1);  //plus 1 for null at the end
             char **linkerArgs = malloc(numLinkerArgs * sizeof(char *));
 
-            memcpy(linkerArgs, defaultLinkerArgs, sizeof(defaultLinkerArgs));
+            size_t currentNumLinkerArgs = 0;
+
+            for(size_t i = currentNumLinkerArgs; i < numDefaultLinkerArgs; i++)
+            {
+                linkerArgs[i + currentNumLinkerArgs] = defaultLinkerArgs[i]; 
+            }
+            currentNumLinkerArgs += numDefaultLinkerArgs;
 
             for(size_t i = 0; i < globalContext.numLinkerLibs; i++)
             {
-                linkerArgs[i + numDefaultLinkerArgs] = globalContext.linkerLibs[i];
+                linkerArgs[i + currentNumLinkerArgs] = globalContext.linkerLibs[i];
             }
+            currentNumLinkerArgs += globalContext.numLinkerLibs;
+
+            for(size_t i = 0; i < globalContext.gc.numLinkerArgs; i++)
+            {
+                linkerArgs[i + currentNumLinkerArgs] = globalContext.gc.linkerArgs[i];
+            }
+            currentNumLinkerArgs += globalContext.gc.numLinkerArgs;
 
             linkerArgs[numLinkerArgs - 1] = NULL;
 
