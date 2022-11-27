@@ -1,0 +1,12 @@
+namespace os
+
+import os::windows
+import cstd
+
+getCommandlineArg() : string
+{
+    argv := windows::GetCommandLineA();
+    stringArg := string {data = argv, len = cstd::strlen(argv)};
+
+    return stringArg;
+}

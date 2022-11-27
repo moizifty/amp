@@ -102,4 +102,6 @@ enum StdHandle
   GetStdHandle(nStdHandle: StdHandle) : *void;
 
   GetFileSizeEx(hFile: *void, lpFileSize: *LARGE_INTEGER) : bool;
+  
+  GetCommandLineA() : *ui8;
 }
