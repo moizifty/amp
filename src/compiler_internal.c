@@ -16,6 +16,7 @@ GenCodeContext newGenCodeContext()
         .typeWhichTypeMethodIsFor = NULL,
         .backend = BACKEND_LLVM,
         .stringHashMap = NewHashMapString(128),
+        .outputName = "out",
     };
 }
 
@@ -598,4 +599,28 @@ bool doesDirExist(char *path)
 
   return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
          (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+void getDirectoryFromFilename(char *path, char *out)
+{
+    size_t i = strlen(path);
+
+    while((path - i) != path)
+    {
+        char ch = *(path + i);
+
+        if(ch == '\\')
+        {
+            break;
+        }
+        else if(ch == '/')
+        {
+            break;
+        }
+
+        i -= 1;
+    }
+
+    strncpy(out, path, i);
+    out[i + 1] = '\0';
 }

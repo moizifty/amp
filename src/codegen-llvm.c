@@ -377,13 +377,19 @@ void cgLLVMEntireProgram(TypeTable *typeTable, NamespaceTable *namespaceTable)
 
     //LLVMRunPassManager(modPassManager, module);
 
+    char *outputFilenameWithoutExt = globalContext.gc.outputName;
+
+    char outName[MAX_PATH];
+    sprintf(outName, "%s.ll", outputFilenameWithoutExt);
+    
     LLVMDIBuilderFinalize(debugBuilder);
     char *printModuleError = NULL;
 
-    LLVMPrintModuleToFile(module, "out.ll", &printModuleError);
+    LLVMPrintModuleToFile(module, outName, &printModuleError);
 
     char *error = NULL;
-    LLVMTargetMachineEmitToFile(machine, module, "out.obj", LLVMObjectFile, &error);
+    sprintf(outName, "%s.obj", outputFilenameWithoutExt);
+    LLVMTargetMachineEmitToFile(machine, module, outName, LLVMObjectFile, &error);
 
     if(error != NULL)
     {

@@ -18,6 +18,8 @@
 
 #define CMDLINE_BACKEND_ID    (0)
 #define CMDLINE_LINKLIB_ID    (1)
+#define CMDLINE_OUT_ID    (2)
+#define CMDLINE_CREATE_OUT_DIR_ID    (2)
 
 extern LexFileBuffer fileBuffer;
 
@@ -97,6 +99,53 @@ SourceFilesList *parseCmdLineArgs(int argc, char **argv, CmdLineArg *possibleCmd
                 parseCmdLineError(PARSE_CMDLINE_MSG_PREFIX_ERROR, "Expected value for argument '%s'", currArg);
             }
         }
+        else if(!strcmp(currArg, "-out"))
+        {
+            CmdLineArg c = possibleCmdLineArgs[CMDLINE_OUT_ID];
+
+            if(nextArg != NULL)
+            {
+                size_t pathLen = strlen(nextArg);
+                char *path = nextArg;
+                if(*path == '\"')
+                {
+                    while(*path == '\"')
+                    {
+                        path++;
+                        pathLen -= 1;
+                    }
+
+                    while(path[pathLen - 1] == '\"')
+                    {
+                        path[pathLen - 1] = '\0';
+                        pathLen -= 1;
+                    }
+
+                }
+
+                globalContext.gc.outputName = malloc(pathLen + 1);
+                strcpy(globalContext.gc.outputName, path);
+
+                i += 1;
+                continue;
+            }
+            else 
+            {
+                parseCmdLineError(PARSE_CMDLINE_MSG_PREFIX_ERROR, "Expected value for argument '%s'", currArg);
+            }
+        }
+        else if(!strcmp(currArg, "-createOutDir"))
+        {
+            CmdLineArg c = possibleCmdLineArgs[CMDLINE_OUT_ID];
+
+            char dir[MAX_PATH];
+            getDirectoryFromFilename(globalContext.gc.outputName, dir);
+
+            if(!doesDirExist(dir))
+            {
+                CreateDirectoryA(dir, NULL);
+            }
+        }
         else
         {
             if(currNumSourceFilesToCompile >= numAllocated)
@@ -126,7 +175,10 @@ int runLinker(char **args)
     {
         pathToWindowsPath(args[i]);
         
-        strcat(cmd, " ");
+        if(cmd[strlen(cmd) - 1] != ':')
+        {
+            strcat(cmd, " ");
+        }
         strcat(cmd, args[i]);
     }
 
@@ -186,11 +238,19 @@ int main(int argc, char **argv)
 
         [CMDLINE_LINKLIB_ID] = 
         {
-            .help = "This setting specifies a library to link, eg '-lib=kernel32",
+            .help = "This setting specifies a library to link, eg '-lib kernel32",
         },
         
+        [CMDLINE_OUT_ID] = 
+        {
+            .help = "This setting sets the name of the output files, eg '-out 'build/main' will produce build/main.exe'",
+        },
         
-        
+        [CMDLINE_CREATE_OUT_DIR_ID] = 
+        {
+            .help = "This setting is a flag, which tells the compiler to create the output dir in the -out path if it does not exis, setting must be after -out",
+        },
+
         //last one should be null
         {
             0,
@@ -254,9 +314,20 @@ int main(int argc, char **argv)
 
         bool linkerSucessful = false;
         { //run linker
+
+            char *outputFileNameWithoutExt = globalContext.gc.outputName;
+            
+            char outputObjName[MAX_PATH];
+            sprintf(outputObjName, "\"%s.obj\"", outputFileNameWithoutExt);
+
+            char outputExeName[MAX_PATH];
+            sprintf(outputExeName, "\"%s.exe\"", outputFileNameWithoutExt);
+
             char *defaultLinkerArgs[] = 
             {
-                "out.obj", 
+                outputObjName,
+                "/out:",
+                outputExeName,
                 "/nologo", 
                 "/nodefaultlib",
                 "libcmt.lib vcruntime.lib ucrt.lib legacy_stdio_definitions.lib legacy_stdio_wide_specifiers.lib", 

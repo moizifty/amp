@@ -92,6 +92,8 @@ typedef struct GenCodeContext
     LLVMBasicBlockRef blockToContinueTo; //when continue appears, what block should it jump to
     LLVMBasicBlockRef blockToBreakTo;
     HashMapString *stringHashMap;
+
+    char* outputName;
 }GenCodeContext;
 
 typedef struct GlobalContext
@@ -193,4 +195,6 @@ char *allocGetNamespaceName(struct ASTNamespaceName *namespace);
 
 bool doesFileExist(char *path);
 bool doesDirExist(char *path);
+
+void getDirectoryFromFilename(char *path, char *out);
 #endif
