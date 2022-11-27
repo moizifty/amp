@@ -65,15 +65,19 @@ void cgLLVMStmtRet(ASTStmt *stmt);
 void cgLLVMABIRet(LLVMValueRef exprToRet);
 
 LLVMValueRef cgLLVMExpr(ASTExpr *expr);
+LLVMValueRef cgLLVMMembAccessExprFromValueRef(CheckerType *lhsType, LLVMValueRef lhs, Token memb);
+LLVMValueRef cgLLVMMembAccessExpr(ASTExpr *LHS, Token memb, bool isMethodAccess);
 LLVMValueRef cgLLVMBuildLogicalAndOrWithValueS(TokType op, LLVMValueRef lhs, LLVMValueRef rhs, CheckerType *lhsType, CheckerType *rhsType);
 LLVMValueRef cgLLVMBuildEqWithValueS(TokType op, LLVMValueRef lhs, LLVMValueRef rhs, CheckerType *lhsType, CheckerType *rhsType);
 LLVMValueRef cgLLVMStructLitFromExpr(ASTExpr *expr);
 LLVMValueRef cgLLVMTaggedUnionLitFromExpr(ASTExpr *expr);
 
+LLVMValueRef cgLLVMArrayViewLitFromValueRef(CheckerType *arrayType, LLVMValueRef valRef);
 LLVMValueRef cgLLVMArrayViewLit(ASTExpr *expr);
 LLVMValueRef cgLLVMAnyLit(ASTExpr *expr);
 LLVMValueRef cgLLVMAnyLitFromValueRef(LLVMValueRef valRef, CheckerType *exprType);
 LLVMValueRef cgLLVMRangeLit(ASTExpr *expr);
+LLVMValueRef cgLLVMCastExprFromValueRef(CheckerType *castTo, CheckerType *castingFrom, LLVMValueRef valRef);
 LLVMValueRef cgLLVMCastExpr(CheckerType *castTo, ASTExpr *expr);
 LLVMValueRef cgLLVMSourceLocLit(TokenPos pos);
 

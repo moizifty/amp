@@ -16,6 +16,7 @@ typedef enum
 {
     TOK_VAR_KW = 256,
     TOK_CONST_KW,
+    TOK_IMMUT_KW,
     TOK_TYPEALIAS_KW,
     TOK_AS_KW,
     TOK_IF_KW,

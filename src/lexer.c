@@ -755,6 +755,12 @@ LEX_START:
                 t.type = TOK_CONST_KW;
                 return t;
             }
+            else if(!strcmp(t.lexeme, "immut"))
+            {
+                t.type = TOK_IMMUT_KW;
+                return t;
+            }
+            
             else if(!strcmp(t.lexeme, "typealias"))
             {
                 t.type = TOK_TYPEALIAS_KW;

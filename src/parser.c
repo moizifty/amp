@@ -2318,7 +2318,7 @@ ASTExpr *postExprTerm(void)
                     elseExpr = expr();
                 }
                 
-                e = newASTExprNullAccess(e, iden, elseExpr);
+                e = newASTExprNullAccess(newASTExprMembAccess(e, iden), elseExpr);
             }
             else parserError(tok, "Expected an identifier for null access but instead got %s", tok.lexeme);
         }

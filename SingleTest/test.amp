@@ -8,12 +8,14 @@ enum e1
     C;
 }
 
-main()
+main() : int
 {
-    a := "sdsd";
-    b: *string = *a;
+    a := "moiz";
+    aas := "moiz";
 
-    c: *void = cast (*void)b ? cast(*void) *b; 
+    b := cast(*string) null;
 
-    io::print("asda %", @cast(*string) c);
+    p := cast(*int) (0x7c00);
+
+    io::print("len: %", p);
 }

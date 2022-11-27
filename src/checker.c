@@ -1118,6 +1118,22 @@ int checkDeclTags(ASTDecl *decl, ASTTagLL *tags)
 
             flags |= TYPE_FOREIGN_FLAG;
         }
+        if(!strcmp(tagName, "exportAs"))
+        {
+            bool hasAtLeast1Param = ((currTag->item->paramLL != NULL) && currTag->item->paramLL->first->numItems > 0);
+
+            if(!hasAtLeast1Param && (decl->kind == A_DECL_FUNC))
+            {
+                checkerErrorLn(currTag->item->name, "The tag '%s' requres atleast 1 parameter, which is the name of symbol to export as", currTag->item->name.lexeme);
+                prettyPrintCheckerSourceError(currTag->item->name, currTag->item->name);
+            }
+            else if(decl->kind == A_DECL_FUNC)
+            {
+                /**/
+            }
+
+            flags |= TYPE_EXPORT_AS;
+        }
         else if(!strcmp(tagName, "useNamespace")) flags |= TYPE_USE_NAMESPACE_FLAG;
         else if(!strcmp(tagName, "useReturn")) flags |= TYPE_FUNC_MUST_USE_RETURN;
         else if(!strcmp(tagName, "distinct")) flags |= TYPE_DISTINCT_FLAG;
@@ -2629,245 +2645,12 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
         }break;
 
         case A_EXPR_NULL_ACCESS:
+        {
+            checkNullAccessExpr(NULL, expr, false);
+        }break;
         case A_EXPR_MEMBER_ACCESS:
         {
-            checkExpr(expr->membAccess.typeName, isIncompletePass);
-
-            if(expr->kind == A_EXPR_NULL_ACCESS)
-            {
-                if(!isTypePointer(expr->membAccess.typeName->checkType))
-                {
-                    checkerError(expr->membAccess.typeName->startTok, "Expression on LHS of '?.' operator must be a pointer type instead got ");
-                    printCheckerType(expr->membAccess.typeName->checkType);
-                    fprintf(stderr, "\n");
-
-                    prettyPrintCheckerSourceError(expr->membAccess.typeName->startTok, expr->membAccess.typeName->endTok);
-                }
-            }
-
-            bool wasEnum = false;
-            CheckerType *membAccessLeftSideType = expr->membAccess.typeName->checkType;
-            
-            bool isValidTypeToMemberAccess = isTypeMemberAccessable(membAccessLeftSideType, &wasEnum);
-            bool foundMethod = false;
-
-            { //check first for method in type
-                
-                //if type is not valid to member access check for methods.
-                SymEntry *e = typeMethodTableLookUp(globalContext.typeMethodTable, membAccessLeftSideType, expr->membAccess.memb.lexeme);
-
-                if(e == NULL) foundMethod = false;
-                // {
-                //     checkerError(expr->membAccess.typeName->startTok, "Expected a valid type for member access, but got: ");
-                //     printCheckerType(membAccessLeftSideType);
-                //     fprintf(stderr, "\n");
-                //     prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
-                // }
-                else
-                {
-                    if(CHECK_TYPE_FLAG(e->type, TYPE_FUNC_THISPTR_FLAG))
-                    {
-                        if(expr->membAccess.typeName->compTimeVal.isL_or_RValue != EXPR_L_VALUE)
-                        {
-                            checkerError(expr->membAccess.memb, "Method cannot be called on non L-VALUE expression, since method '%s' on type: ", e->name);
-                            printCheckerType(expr->membAccess.typeName->checkType);
-                            fprintf(stderr, " has a pointer this parameter\n");
-                            
-                            prettyPrintCheckerSourceError(expr->membAccess.memb, expr->membAccess.memb);
-                        }
-                    }
-
-                    expr->checkType = e->type;
-                    expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                    expr->membAccess.isMethodAccess = true;
-                    expr->idenSymEntry = e;
-                    expr->idenSymEntry->myDecl;
-                    foundMethod = true;
-                }
-            }
-            
-            if(!foundMethod)
-            {
-                if(wasEnum)
-                {
-                    CheckerType *enumType = (isTypeAliased(membAccessLeftSideType)) ? getAliasedTypeBase(membAccessLeftSideType) : membAccessLeftSideType;
-                    char *enumTypeName = enumType->enumType.name;
-
-                    if(expr->membAccess.typeName->compTimeVal.isL_or_RValue != EXPR_NEITHER_VALUE)
-                    {
-                        checkerErrorLn(expr->startTok, "Expected enum member access as '%s.MEMBER'", enumTypeName);
-                    }
-                    else
-                    {
-                        //TODO if enum is [strict] then set checkType to enum member else int.
-                        //TODO: set comptimeval and stuff
-                        size_t membIndex = 0;
-                        if(!typeHasMember(enumType, expr->membAccess.memb.lexeme, &membIndex))
-                        {
-                            checkerError(expr->membAccess.memb, "Member '%s', does not exist in enum type: ", expr->membAccess.memb.lexeme);
-                            printCheckerType(enumType);
-
-                            prettyPrintCheckerSourceError(expr->membAccess.memb, expr->membAccess.memb);
-                        }
-                        else
-                        {
-                            EnumMembLL *memb = getEnumMembLLAt(enumType->enumType.membLL, membIndex);
-
-                            expr->checkType = membAccessLeftSideType;//newCheckerTypeEnumMemb(entry->type, 0);
-                            expr->compTimeVal.i = memb->item->val;
-                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                        }
-                    }
-                }
-                else if(isTypeNamespace(membAccessLeftSideType))
-                {
-                    size_t index = 0;
-                    bool found = typeHasMember(namespaceInfoType, expr->membAccess.memb.lexeme, &index);
-                   
-                    if(!found)
-                    {
-                        checkerError(expr->startTok, "Type ");
-                        printCheckerType(namespaceInfoType);
-                        fprintf(stderr, " has not got member '%s'\n", expr->membAccess.memb.lexeme);
-                    }
-                    else
-                    {
-                        ScopedDeclLL *dll = namespaceInfoType->structType.declLL;
-
-                        ScopedDecl *d = getScopedDeclLLAt(dll, index)->item;
-
-                        expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                        if(CHECK_SCOPED_DECL_FLAG(d, SCOPED_DECL_CONST)) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                        else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-
-                        expr->checkType = d->type;
-                    }
-                }
-                else if(isTypeArray(membAccessLeftSideType))
-                {
-                    //TODO finish
-                    //array.len
-                    if(!strcmp(expr->membAccess.memb.lexeme, "len"))
-                    {
-                        expr->checkType = i64Type;
-                        if(isTypeFixedArray(membAccessLeftSideType))
-                        {
-                            CheckerType *arrType = (isTypeAliased(membAccessLeftSideType)) ? getAliasedTypeBase(membAccessLeftSideType) : membAccessLeftSideType;
-
-                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                            expr->compTimeVal.i = arrType->arrayType.size;
-                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                        }
-                        else expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                    }
-                    //arrayslice.data
-                    else if(!strcmp(expr->membAccess.memb.lexeme, "data"))
-                    {
-                        expr->checkType = newCheckerTypePointer(voidType);
-                        expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                    }
-                    else checkerErrorLn(expr->startTok, "Identifier '%s',  is not a valid identifier for member access on an array type", expr->membAccess.memb.lexeme);
-                    
-                    if(isTypeSliceArray(membAccessLeftSideType)) expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-                }
-                else if(isValidTypeToMemberAccess)
-                {
-                    if(isTypePointer(membAccessLeftSideType))
-                    {
-                        membAccessLeftSideType = (isTypeAliased(membAccessLeftSideType)) ? 
-                                                getAliasedTypeBase(membAccessLeftSideType)->pointerType.base : membAccessLeftSideType->pointerType.base;
-                    }
-
-                    if(isTypeAliased(membAccessLeftSideType))
-                        membAccessLeftSideType = getAliasedTypeBase(membAccessLeftSideType);
-
-                    size_t index = 0;
-                    bool found = typeHasMember(membAccessLeftSideType, expr->membAccess.memb.lexeme, &index);
-
-                    if(!found)
-                    {
-                        checkerError(expr->startTok, "Type ");
-                        printCheckerType(membAccessLeftSideType);
-                        fprintf(stderr, " has not got member '%s'\n", expr->membAccess.memb.lexeme);
-                    }
-                    else if(isTypeTaggedUnion(membAccessLeftSideType))
-                    {
-                        if(index == -1) //.kind access
-                        {
-                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                            expr->checkType = membAccessLeftSideType->taggedUnionType.tagEnumType;
-                        }
-                        else
-                        {
-                            ScopedDeclLL *d = getScopedDeclLLAt(membAccessLeftSideType->taggedUnionType.declLL, index);
-                            CheckerType *enumType = isTypeAliased(membAccessLeftSideType->taggedUnionType.tagEnumType) ?
-                                                    getAliasedTypeBase(membAccessLeftSideType->taggedUnionType.tagEnumType) :
-                                                    membAccessLeftSideType->taggedUnionType.tagEnumType;
-
-                            size_t enumMembIndex = 0;
-                            typeHasMember(enumType, expr->membAccess.memb.lexeme, &enumMembIndex);
-
-                            EnumMembLL *em = getEnumMembLLAt(enumType->enumType.membLL, enumMembIndex);
-                            
-                            expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                            expr->compTimeVal.i = em->item->val;
-                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                            expr->checkType = copyCheckerType(membAccessLeftSideType->taggedUnionType.tagEnumType);
-
-                            if(isTypeAliased(expr->checkType)) 
-                            {
-                                CheckerType *alias =  getAliasedTypeBase(expr->checkType);
-                                alias->enumType.isTypeBelongingToTaggedUnionMemberAccess = true;
-                                alias->enumType.taggedUnionMemberAccess.taggedUnionType = membAccessLeftSideType;
-                                alias->enumType.taggedUnionMemberAccess.unionMember = d->item;
-                            }
-                            else 
-                            {
-                                expr->checkType->enumType.isTypeBelongingToTaggedUnionMemberAccess = true;
-                                expr->checkType->enumType.isTypeBelongingToTaggedUnionMemberAccess = true;
-                                expr->checkType->enumType.taggedUnionMemberAccess.taggedUnionType = membAccessLeftSideType;
-                                expr->checkType->enumType.taggedUnionMemberAccess.unionMember = d->item;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ScopedDeclLL *dll = (isTypeUnion(membAccessLeftSideType)) ? membAccessLeftSideType->unionType.declLL : membAccessLeftSideType->structType.declLL;
-
-                        ScopedDecl *d = getScopedDeclLLAt(dll, index)->item;
-
-                        expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                        if(CHECK_SCOPED_DECL_FLAG(d, SCOPED_DECL_CONST)) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                        else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-
-                        expr->checkType = d->type;
-                    }
-                }
-                else
-                {
-                    checkerError(expr->membAccess.typeName->startTok, "Expected a valid type for member access, but got: ");
-                    printCheckerType(membAccessLeftSideType);
-                    fprintf(stderr, "\n");
-                    prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
-                }
-
-                if((expr->kind == A_EXPR_NULL_ACCESS) && (expr->membAccess.nullAccess.elseExpr != NULL))
-                {
-                    if(!checkRHSExprWithTypeAndCast(expr->checkType, &(expr->membAccess.nullAccess.elseExpr), true, isIncompletePass))
-                    {
-                        checkerError(expr->membAccess.typeName->startTok, "Else expressions type should be equal or castable to members type, expected type ");
-                        printCheckerType(expr->checkType);
-                        fprintf(stderr, " but got type ");
-                        printCheckerType(expr->membAccess.nullAccess.elseExpr->checkType);
-                        fprintf(stderr, "\n");
-                        prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
-                    }
-                }
-                
-            }
+            checkMembAccessExpr(expr, isIncompletePass);
         }break;
 
         case A_EXPR_UNARY:
@@ -4618,6 +4401,273 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
         }break;
     }
 }
+void checkMembAccessExpr(ASTExpr *expr, bool isIncompletePass)
+{
+    checkExpr(expr->membAccess.typeName, isIncompletePass);
+
+    bool wasEnum = false;
+    CheckerType *membAccessLeftSideType = expr->membAccess.typeName->checkType;
+    
+    bool isValidTypeToMemberAccess = isTypeMemberAccessable(membAccessLeftSideType, &wasEnum);
+    bool foundMethod = false;
+
+    { //check first for method in type
+        
+        //if type is not valid to member access check for methods.
+        SymEntry *e = typeMethodTableLookUp(globalContext.typeMethodTable, membAccessLeftSideType, expr->membAccess.memb.lexeme);
+
+        if(e == NULL) foundMethod = false;
+        // {
+        //     checkerError(expr->membAccess.typeName->startTok, "Expected a valid type for member access, but got: ");
+        //     printCheckerType(membAccessLeftSideType);
+        //     fprintf(stderr, "\n");
+        //     prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+        // }
+        else
+        {
+            if(CHECK_TYPE_FLAG(e->type, TYPE_FUNC_THISPTR_FLAG))
+            {
+                if(expr->membAccess.typeName->compTimeVal.isL_or_RValue != EXPR_L_VALUE)
+                {
+                    checkerError(expr->membAccess.memb, "Method cannot be called on non L-VALUE expression, since method '%s' on type: ", e->name);
+                    printCheckerType(expr->membAccess.typeName->checkType);
+                    fprintf(stderr, " has a pointer this parameter\n");
+                    
+                    prettyPrintCheckerSourceError(expr->membAccess.memb, expr->membAccess.memb);
+                }
+            }
+
+            expr->checkType = e->type;
+            expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+            expr->membAccess.isMethodAccess = true;
+            expr->idenSymEntry = e;
+            expr->idenSymEntry->myDecl;
+            foundMethod = true;
+        }
+    }
+    
+    if(!foundMethod)
+    {
+        if(wasEnum)
+        {
+            CheckerType *enumType = (isTypeAliased(membAccessLeftSideType)) ? getAliasedTypeBase(membAccessLeftSideType) : membAccessLeftSideType;
+            char *enumTypeName = enumType->enumType.name;
+
+            if(expr->membAccess.typeName->compTimeVal.isL_or_RValue != EXPR_NEITHER_VALUE)
+            {
+                checkerErrorLn(expr->startTok, "Expected enum member access as '%s.MEMBER'", enumTypeName);
+            }
+            else
+            {
+                //TODO if enum is [strict] then set checkType to enum member else int.
+                //TODO: set comptimeval and stuff
+                size_t membIndex = 0;
+                if(!typeHasMember(enumType, expr->membAccess.memb.lexeme, &membIndex))
+                {
+                    checkerError(expr->membAccess.memb, "Member '%s', does not exist in enum type: ", expr->membAccess.memb.lexeme);
+                    printCheckerType(enumType);
+
+                    prettyPrintCheckerSourceError(expr->membAccess.memb, expr->membAccess.memb);
+                }
+                else
+                {
+                    EnumMembLL *memb = getEnumMembLLAt(enumType->enumType.membLL, membIndex);
+
+                    expr->checkType = membAccessLeftSideType;//newCheckerTypeEnumMemb(entry->type, 0);
+                    expr->compTimeVal.i = memb->item->val;
+                    expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                }
+            }
+        }
+        else if(isTypeNamespace(membAccessLeftSideType))
+        {
+            size_t index = 0;
+            bool found = typeHasMember(namespaceInfoType, expr->membAccess.memb.lexeme, &index);
+            
+            if(!found)
+            {
+                checkerError(expr->startTok, "Type ");
+                printCheckerType(namespaceInfoType);
+                fprintf(stderr, " has not got member '%s'\n", expr->membAccess.memb.lexeme);
+            }
+            else
+            {
+                ScopedDeclLL *dll = namespaceInfoType->structType.declLL;
+
+                ScopedDecl *d = getScopedDeclLLAt(dll, index)->item;
+
+                expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+                if(CHECK_SCOPED_DECL_FLAG(d, SCOPED_DECL_CONST)) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+
+                expr->checkType = d->type;
+            }
+        }
+        else if(isTypeArray(membAccessLeftSideType))
+        {
+            //TODO finish
+            //array.len
+            if(!strcmp(expr->membAccess.memb.lexeme, "len"))
+            {
+                expr->checkType = i64Type;
+                if(isTypeFixedArray(membAccessLeftSideType))
+                {
+                    CheckerType *arrType = (isTypeAliased(membAccessLeftSideType)) ? getAliasedTypeBase(membAccessLeftSideType) : membAccessLeftSideType;
+
+                    expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                    expr->compTimeVal.i = arrType->arrayType.size;
+                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                }
+                else expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+            }
+            //arrayslice.data
+            else if(!strcmp(expr->membAccess.memb.lexeme, "data"))
+            {
+                expr->checkType = newCheckerTypePointer(voidType);
+                expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+            }
+            else checkerErrorLn(expr->startTok, "Identifier '%s',  is not a valid identifier for member access on an array type", expr->membAccess.memb.lexeme);
+            
+            if(isTypeSliceArray(membAccessLeftSideType)) expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+        }
+        else if(isValidTypeToMemberAccess)
+        {
+            if(isTypePointer(membAccessLeftSideType))
+            {
+                membAccessLeftSideType = (isTypeAliased(membAccessLeftSideType)) ? 
+                                        getAliasedTypeBase(membAccessLeftSideType)->pointerType.base : membAccessLeftSideType->pointerType.base;
+            }
+
+            if(isTypeAliased(membAccessLeftSideType))
+                membAccessLeftSideType = getAliasedTypeBase(membAccessLeftSideType);
+
+            size_t index = 0;
+            bool found = typeHasMember(membAccessLeftSideType, expr->membAccess.memb.lexeme, &index);
+
+            if(!found)
+            {
+                checkerError(expr->startTok, "Type ");
+                printCheckerType(membAccessLeftSideType);
+                fprintf(stderr, " has not got member '%s'\n", expr->membAccess.memb.lexeme);
+            }
+            else if(isTypeTaggedUnion(membAccessLeftSideType))
+            {
+                if(index == -1) //.kind access
+                {
+                    expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                    expr->checkType = membAccessLeftSideType->taggedUnionType.tagEnumType;
+                }
+                else
+                {
+                    ScopedDeclLL *d = getScopedDeclLLAt(membAccessLeftSideType->taggedUnionType.declLL, index);
+                    CheckerType *enumType = isTypeAliased(membAccessLeftSideType->taggedUnionType.tagEnumType) ?
+                                            getAliasedTypeBase(membAccessLeftSideType->taggedUnionType.tagEnumType) :
+                                            membAccessLeftSideType->taggedUnionType.tagEnumType;
+
+                    size_t enumMembIndex = 0;
+                    typeHasMember(enumType, expr->membAccess.memb.lexeme, &enumMembIndex);
+
+                    EnumMembLL *em = getEnumMembLLAt(enumType->enumType.membLL, enumMembIndex);
+                    
+                    expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                    expr->compTimeVal.i = em->item->val;
+                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                    expr->checkType = copyCheckerType(membAccessLeftSideType->taggedUnionType.tagEnumType);
+
+                    if(isTypeAliased(expr->checkType)) 
+                    {
+                        CheckerType *alias =  getAliasedTypeBase(expr->checkType);
+                        alias->enumType.isTypeBelongingToTaggedUnionMemberAccess = true;
+                        alias->enumType.taggedUnionMemberAccess.taggedUnionType = membAccessLeftSideType;
+                        alias->enumType.taggedUnionMemberAccess.unionMember = d->item;
+                    }
+                    else 
+                    {
+                        expr->checkType->enumType.isTypeBelongingToTaggedUnionMemberAccess = true;
+                        expr->checkType->enumType.isTypeBelongingToTaggedUnionMemberAccess = true;
+                        expr->checkType->enumType.taggedUnionMemberAccess.taggedUnionType = membAccessLeftSideType;
+                        expr->checkType->enumType.taggedUnionMemberAccess.unionMember = d->item;
+                    }
+                }
+            }
+            else
+            {
+                ScopedDeclLL *dll = (isTypeUnion(membAccessLeftSideType)) ? membAccessLeftSideType->unionType.declLL : membAccessLeftSideType->structType.declLL;
+
+                ScopedDecl *d = getScopedDeclLLAt(dll, index)->item;
+
+                expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+                if(CHECK_SCOPED_DECL_FLAG(d, SCOPED_DECL_CONST)) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+
+                expr->checkType = d->type;
+            }
+        }
+        else
+        {
+            checkerError(expr->membAccess.typeName->startTok, "Expected a valid type for member access, but got: ");
+            printCheckerType(membAccessLeftSideType);
+            fprintf(stderr, "\n");
+            prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+        }
+    }
+}
+bool checkNullAccessExpr(CheckerType *inferredType, ASTExpr *expr, bool isIncompletePass)
+{
+    bool isInferredTypeNull = inferredType == NULL;
+    CheckerType *typeToCheckAgainst = (inferredType == NULL) ? NULL : inferredType;
+
+    expr->nullAccess.preCastMembAccessExpr = expr->nullAccess.access;
+
+    checkExpr(expr->nullAccess.access->membAccess.typeName, isIncompletePass);
+
+    if(!isTypePointer(expr->nullAccess.access->membAccess.typeName->checkType))
+    {
+        checkerError(expr->nullAccess.access->membAccess.typeName->startTok, "Expression on LHS of '?.' operator must be a pointer type instead got ");
+        printCheckerType(expr->nullAccess.access->membAccess.typeName->checkType);
+        fprintf(stderr, "\n");
+
+        prettyPrintCheckerSourceError(expr->nullAccess.access->membAccess.typeName->startTok, expr->nullAccess.access->membAccess.typeName->endTok);
+    }
+
+    if(!checkRHSExprWithTypeAndCast(typeToCheckAgainst, &(expr->nullAccess.access), true, isIncompletePass))
+    {
+        checkerError(expr->startTok, "Null access operator expression should evalute (or be castable) to type ");
+        printCheckerType(typeToCheckAgainst);
+        fprintf(stderr, " but got type ");
+        printCheckerType(expr->nullAccess.access->checkType);
+        fprintf(stderr, "\n");
+        prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+
+        return false;
+    }
+
+    if(typeToCheckAgainst == NULL) typeToCheckAgainst = expr->nullAccess.access->checkType;
+
+    if(expr->nullAccess.elseExpr != NULL)
+    {
+        expr->nullAccess.preCastElseExpr = expr->nullAccess.elseExpr;
+
+        if(!checkRHSExprWithTypeAndCast(typeToCheckAgainst, &(expr->nullAccess.elseExpr), true, isIncompletePass))
+        {
+            checkerError(expr->startTok, "Else expressions type should be equal or castable to members type, expected type ");
+            printCheckerType(typeToCheckAgainst);
+            fprintf(stderr, " but got type ");
+            printCheckerType(expr->nullAccess.elseExpr->checkType);
+            fprintf(stderr, "\n");
+            prettyPrintCheckerSourceError(expr->startTok, expr->endTok);
+
+            return false;
+        }
+    }
+    
+    expr->checkType = typeToCheckAgainst;
+
+    return true;
+}
 void checkScopeAccessExpr(ASTExpr *expr, bool isIncompletePass, bool isRecursing)
 {
     bool temp1 = globalContext.cc.currScopedExpr.isCheckingScopeExpr;
@@ -4933,6 +4983,11 @@ bool checkInferredExpr(CheckerType *inferredType, ASTExpr **expr, bool shouldIns
                 }
 
             }
+        }break;
+
+        case A_EXPR_NULL_ACCESS:
+        {
+            if(!checkNullAccessExpr(inferredType, *expr, isIncompletePass)) return false;
         }break;
 
         case A_EXPR_ARRAY_LITERAL:

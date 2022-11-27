@@ -120,6 +120,7 @@ struct ASTExpr
     bool genAnyCastForDefaultValueExpr;
     bool genFuncRetAsArgForDefaultValueExpr;
     char *genIdenName; //when generating c code,this will be used instead of generating the expression
+    LLVMValueRef bckendVal;
 
     SymEntry *idenSymEntry;
     CompTimeVal compTimeVal;
@@ -153,12 +154,18 @@ struct ASTExpr
             Token memb;
 
             bool isMethodAccess;
-
-            struct //extra data for null access ast
-            {   
-                ASTExpr *elseExpr;
-            }nullAccess;
         }membAccess;
+        struct
+        {
+            ASTExpr *access;
+            ASTExpr* elseExpr;
+
+            //if access is casted this stores the uncased expr
+            //used to ddetermine type in backend
+            //if no cast then this equals access
+            ASTExpr *preCastMembAccessExpr;
+            ASTExpr *preCastElseExpr;
+        }nullAccess;
         struct
         {
             ASTExpr *scopeName;
@@ -946,7 +953,7 @@ ASTExpr *newASTExprEnumInferLit(Token startTok, Token iden);
 ASTExpr *newASTExprFuncCall(ASTExpr *iden, ASTNamedExprLL *args);
 ASTExpr *newASTExprArrayRef(ASTExpr *iden, ASTExpr *index);
 ASTExpr *newASTExprMembAccess(ASTExpr *typeName, Token memb);
-ASTExpr *newASTExprNullAccess(ASTExpr *typeName, Token memb, ASTExpr *elseExpr);
+ASTExpr *newASTExprNullAccess(ASTExpr *access, ASTExpr *elseExpr);
 ASTExpr *newASTExprScopeAccess(ASTExpr *scopeName, Token memb);
 ASTExpr *newASTExprPost(Token op, ASTExpr *expr);
 

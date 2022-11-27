@@ -478,14 +478,14 @@ ASTExpr *newASTExprMembAccess(ASTExpr *typeName, Token memb)
     
     return e;
 }
-ASTExpr *newASTExprNullAccess(ASTExpr *typeName, Token memb, ASTExpr *elseExpr)
+ASTExpr *newASTExprNullAccess(ASTExpr *access, ASTExpr *elseExpr)
 {
-    ASTExpr *e = allocASTExpr(A_EXPR_NULL_ACCESS, typeName->startTok);
-    e->membAccess.typeName = typeName;
-    e->membAccess.memb = memb;
-    e->membAccess.isMethodAccess = false;
-    e->membAccess.nullAccess.elseExpr = elseExpr;
-    
+    ASTExpr *e = allocASTExpr(A_EXPR_NULL_ACCESS, access->startTok);
+    e->nullAccess.access = access;
+    e->nullAccess.elseExpr = elseExpr;
+    e->nullAccess.preCastMembAccessExpr = access;
+    e->nullAccess.preCastElseExpr = elseExpr;
+
     return e;
 }
 
