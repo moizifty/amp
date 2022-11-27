@@ -8,7 +8,7 @@ enum e1
     C;
 }
 
-main() : int
+main()
 {
     a := "moiz";
     aas := "moiz";

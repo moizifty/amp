@@ -183,197 +183,197 @@ void cgLLVMEntireProgram(TypeTable *typeTable, NamespaceTable *namespaceTable)
     cgLLVMNamespaceTable(namespaceTable);
 
     currAllocPoint = NULL;
-    { //emit main function
+    // { //emit main function
 
-        // int main(int argc, char **argv)
-        // {
-        //     #include "typeinfos.h"
-        //     __typeInfos = __tempTypeInfos;
-        //     prelude_string *stringArgv = malloc(argc * sizeof(prelude_string));
-        //     int i;
-        //     for(i = 0; i < argc; i++)
-        //     {
-        //         stringArgv[i] = STRING_LIT(argv[i], strlen(argv[i]));
-        //     }
-        //     ArrayView argvArrayView = ARRAY_VIEW_LIT(stringArgv, argc, prelude_string);
-        //     std_io_stdout = (std_io___openStdOut());
-        //     std_io_stdin = (std_io___openStdIn());
-        //     int r = global_main(argvArrayView);
-        //     free(stringArgv);
-        //     return r;
-        // }
+    //     // int main(int argc, char **argv)
+    //     // {
+    //     //     #include "typeinfos.h"
+    //     //     __typeInfos = __tempTypeInfos;
+    //     //     prelude_string *stringArgv = malloc(argc * sizeof(prelude_string));
+    //     //     int i;
+    //     //     for(i = 0; i < argc; i++)
+    //     //     {
+    //     //         stringArgv[i] = STRING_LIT(argv[i], strlen(argv[i]));
+    //     //     }
+    //     //     ArrayView argvArrayView = ARRAY_VIEW_LIT(stringArgv, argc, prelude_string);
+    //     //     std_io_stdout = (std_io___openStdOut());
+    //     //     std_io_stdin = (std_io___openStdIn());
+    //     //     int r = global_main(argvArrayView);
+    //     //     free(stringArgv);
+    //     //     return r;
+    //     // }
 
-        LLVMTypeRef int64typellvm = LLVMInt64TypeInContext(context);
-        LLVMTypeRef mainFnTypeParams[2] =
-        {
-            int64typellvm,
-            LLVMPointerType(LLVMPointerType(LLVMInt8TypeInContext(context), 0), 0),
-        };
+    //     LLVMTypeRef int64typellvm = LLVMInt64TypeInContext(context);
+    //     LLVMTypeRef mainFnTypeParams[2] =
+    //     {
+    //         int64typellvm,
+    //         LLVMPointerType(LLVMPointerType(LLVMInt8TypeInContext(context), 0), 0),
+    //     };
 
-        LLVMTypeRef mainFnType = LLVMFunctionType(int64typellvm, 
-                                                  mainFnTypeParams, 2, false);
+    //     LLVMTypeRef mainFnType = LLVMFunctionType(int64typellvm, 
+    //                                               mainFnTypeParams, 2, false);
 
-        LLVMValueRef mallocFnRef = LLVMGetNamedFunction(module, "malloc");
+    //     LLVMValueRef mallocFnRef = LLVMGetNamedFunction(module, "malloc");
 
-        LLVMValueRef mainFn = LLVMAddFunction(module, "main", mainFnType);
-        LLVMValueRef argcParam = LLVMGetParam(mainFn, 0);
-        LLVMValueRef argvParam = LLVMGetParam(mainFn, 1);
+    //     LLVMValueRef mainFn = LLVMAddFunction(module, "main", mainFnType);
+    //     LLVMValueRef argcParam = LLVMGetParam(mainFn, 0);
+    //     LLVMValueRef argvParam = LLVMGetParam(mainFn, 1);
 
-        LLVMBasicBlockRef mainFnEntryBlock = LLVMAppendBasicBlockInContext(context, mainFn, "entry");
-        LLVMPositionBuilderAtEnd(builder, mainFnEntryBlock);
+    //     LLVMBasicBlockRef mainFnEntryBlock = LLVMAppendBasicBlockInContext(context, mainFn, "entry");
+    //     LLVMPositionBuilderAtEnd(builder, mainFnEntryBlock);
         
 
-        LLVMValueRef sargvMallocSize = LLVMBuildMul(builder, 
-                                                 LLVMConstInt(int64typellvm, checkerTypeGetSize(stringType), false),
-                                                 argcParam, 
-                                                 "sargvSize");
-        LLVMValueRef mallocArgs[1] =
-        {
-            sargvMallocSize,
-        };
-        LLVMValueRef sargv = LLVMBuildCall(builder, mallocFnRef, mallocArgs, 1, "sargv");
-        sargv = LLVMBuildBitCast(builder, sargv, LLVMPointerType(cgLLVMCheckerTypeToTypeRef(stringType, false), 0), "");
+    //     LLVMValueRef sargvMallocSize = LLVMBuildMul(builder, 
+    //                                              LLVMConstInt(int64typellvm, checkerTypeGetSize(stringType), false),
+    //                                              argcParam, 
+    //                                              "sargvSize");
+    //     LLVMValueRef mallocArgs[1] =
+    //     {
+    //         sargvMallocSize,
+    //     };
+    //     LLVMValueRef sargv = LLVMBuildCall(builder, mallocFnRef, mallocArgs, 1, "sargv");
+    //     sargv = LLVMBuildBitCast(builder, sargv, LLVMPointerType(cgLLVMCheckerTypeToTypeRef(stringType, false), 0), "");
         
-        { //emit foor loop
-            LLVMValueRef loopCounter = LLVMBuildAlloca(builder, int64typellvm, "loopCounter");
-            LLVMBuildStore(builder, LLVMConstNull(int64typellvm), loopCounter);
-            //LLVMBuildLoad2(builder, int64typellvm, argcParam, "");
-            LLVMBasicBlockRef forCondBlock = LLVMCreateBasicBlockInContext(context, "forCondBlock");
-            LLVMBasicBlockRef forEnterBlock = LLVMCreateBasicBlockInContext(context, "forEnter");
-            LLVMBasicBlockRef forLoopIncBlock = LLVMCreateBasicBlockInContext(context, "forLoopIncBlock");
-            LLVMBasicBlockRef forExitBlock = LLVMCreateBasicBlockInContext(context, "forExit");
+    //     { //emit foor loop
+    //         LLVMValueRef loopCounter = LLVMBuildAlloca(builder, int64typellvm, "loopCounter");
+    //         LLVMBuildStore(builder, LLVMConstNull(int64typellvm), loopCounter);
+    //         //LLVMBuildLoad2(builder, int64typellvm, argcParam, "");
+    //         LLVMBasicBlockRef forCondBlock = LLVMCreateBasicBlockInContext(context, "forCondBlock");
+    //         LLVMBasicBlockRef forEnterBlock = LLVMCreateBasicBlockInContext(context, "forEnter");
+    //         LLVMBasicBlockRef forLoopIncBlock = LLVMCreateBasicBlockInContext(context, "forLoopIncBlock");
+    //         LLVMBasicBlockRef forExitBlock = LLVMCreateBasicBlockInContext(context, "forExit");
             
-            LLVMBuildBr(builder, forCondBlock);
+    //         LLVMBuildBr(builder, forCondBlock);
 
-            LLVMAppendExistingBasicBlock(mainFn, forCondBlock);
-            LLVMPositionBuilderAtEnd(builder, forCondBlock);
+    //         LLVMAppendExistingBasicBlock(mainFn, forCondBlock);
+    //         LLVMPositionBuilderAtEnd(builder, forCondBlock);
 
-            LLVMValueRef forCond = LLVMBuildICmp(builder, LLVMIntSLT, 
-                                                LLVMBuildLoad(builder, loopCounter, ""), argcParam, "forCond");
+    //         LLVMValueRef forCond = LLVMBuildICmp(builder, LLVMIntSLT, 
+    //                                             LLVMBuildLoad(builder, loopCounter, ""), argcParam, "forCond");
 
-            LLVMBuildCondBr(builder, forCond, forEnterBlock, forExitBlock);
+    //         LLVMBuildCondBr(builder, forCond, forEnterBlock, forExitBlock);
 
 
-            LLVMAppendExistingBasicBlock(mainFn, forEnterBlock);
-            LLVMPositionBuilderAtEnd(builder, forEnterBlock);
+    //         LLVMAppendExistingBasicBlock(mainFn, forEnterBlock);
+    //         LLVMPositionBuilderAtEnd(builder, forEnterBlock);
 
-                //emit for loop body
-            {
-                LLVMValueRef inds[1] =
-                {
-                    LLVMBuildLoad(builder, loopCounter, ""),
-                };
+    //             //emit for loop body
+    //         {
+    //             LLVMValueRef inds[1] =
+    //             {
+    //                 LLVMBuildLoad(builder, loopCounter, ""),
+    //             };
 
-                LLVMValueRef ptrToIndex = LLVMBuildInBoundsGEP(builder, sargv, inds, 1, "");
-                LLVMValueRef ptrToStrData = LLVMBuildStructGEP(builder, ptrToIndex, 0, "");
-                LLVMValueRef ptrToStrLen = LLVMBuildStructGEP(builder, ptrToIndex, 1, "");
+    //             LLVMValueRef ptrToIndex = LLVMBuildInBoundsGEP(builder, sargv, inds, 1, "");
+    //             LLVMValueRef ptrToStrData = LLVMBuildStructGEP(builder, ptrToIndex, 0, "");
+    //             LLVMValueRef ptrToStrLen = LLVMBuildStructGEP(builder, ptrToIndex, 1, "");
 
-                LLVMValueRef ptrToArgAtIndex = LLVMBuildInBoundsGEP(builder, argvParam, inds, 1, "");
+    //             LLVMValueRef ptrToArgAtIndex = LLVMBuildInBoundsGEP(builder, argvParam, inds, 1, "");
 
-                LLVMValueRef argAtIndex = LLVMBuildLoad(builder, ptrToArgAtIndex, "");
+    //             LLVMValueRef argAtIndex = LLVMBuildLoad(builder, ptrToArgAtIndex, "");
 
-                LLVMBuildStore(builder, argAtIndex, ptrToStrData);
+    //             LLVMBuildStore(builder, argAtIndex, ptrToStrData);
 
-                LLVMValueRef strlenFn = LLVMGetNamedFunction(module, "strlen");
+    //             LLVMValueRef strlenFn = LLVMGetNamedFunction(module, "strlen");
 
-                LLVMValueRef strLenResult = LLVMBuildCall(builder, strlenFn, (LLVMValueRef [1]){argAtIndex}, 1, "");
+    //             LLVMValueRef strLenResult = LLVMBuildCall(builder, strlenFn, (LLVMValueRef [1]){argAtIndex}, 1, "");
 
-                LLVMBuildStore(builder, strLenResult, ptrToStrLen);
+    //             LLVMBuildStore(builder, strLenResult, ptrToStrLen);
 
-            }
-            LLVMBuildBr(builder, forLoopIncBlock);
+    //         }
+    //         LLVMBuildBr(builder, forLoopIncBlock);
 
-            LLVMAppendExistingBasicBlock(mainFn, forLoopIncBlock);
-            LLVMPositionBuilderAtEnd(builder, forLoopIncBlock);
+    //         LLVMAppendExistingBasicBlock(mainFn, forLoopIncBlock);
+    //         LLVMPositionBuilderAtEnd(builder, forLoopIncBlock);
 
-            LLVMValueRef temp1 = LLVMBuildLoad(builder, loopCounter, "");
-            LLVMValueRef temp2 = LLVMBuildAdd(builder, temp1, LLVMConstInt(int64typellvm, 1, false), "");
+    //         LLVMValueRef temp1 = LLVMBuildLoad(builder, loopCounter, "");
+    //         LLVMValueRef temp2 = LLVMBuildAdd(builder, temp1, LLVMConstInt(int64typellvm, 1, false), "");
 
-            LLVMBuildStore(builder, temp2, loopCounter);
-            LLVMBuildBr(builder, forCondBlock);
+    //         LLVMBuildStore(builder, temp2, loopCounter);
+    //         LLVMBuildBr(builder, forCondBlock);
 
-            LLVMAppendExistingBasicBlock(mainFn, forExitBlock);
-            LLVMPositionBuilderAtEnd(builder, forExitBlock);
-        }
+    //         LLVMAppendExistingBasicBlock(mainFn, forExitBlock);
+    //         LLVMPositionBuilderAtEnd(builder, forExitBlock);
+    //     }
 
-        LLVMValueRef arrayViewArgs = LLVMBuildAlloca(builder, cgLLVMCheckerTypeToTypeRef(arrayViewType, false), "arrayViewArgs");
+    //     LLVMValueRef arrayViewArgs = LLVMBuildAlloca(builder, cgLLVMCheckerTypeToTypeRef(arrayViewType, false), "arrayViewArgs");
         
-        { //set up args arrayview 
-            LLVMValueRef ptrToLen = LLVMBuildStructGEP(builder, arrayViewArgs, 0, "");
-            LLVMValueRef ptrToData = LLVMBuildStructGEP(builder, arrayViewArgs, 1, "");
-            LLVMValueRef ptrToElemSize = LLVMBuildStructGEP(builder, arrayViewArgs, 2, "");
+    //     { //set up args arrayview 
+    //         LLVMValueRef ptrToLen = LLVMBuildStructGEP(builder, arrayViewArgs, 0, "");
+    //         LLVMValueRef ptrToData = LLVMBuildStructGEP(builder, arrayViewArgs, 1, "");
+    //         LLVMValueRef ptrToElemSize = LLVMBuildStructGEP(builder, arrayViewArgs, 2, "");
 
-            LLVMValueRef data = LLVMBuildBitCast(builder, sargv, LLVMPointerType(LLVMInt8TypeInContext(context), 0), "");
-            LLVMBuildStore(builder, data, ptrToData);
+    //         LLVMValueRef data = LLVMBuildBitCast(builder, sargv, LLVMPointerType(LLVMInt8TypeInContext(context), 0), "");
+    //         LLVMBuildStore(builder, data, ptrToData);
 
-            LLVMBuildStore(builder, argcParam, ptrToLen);
-            LLVMBuildStore(builder, LLVMConstInt(int64typellvm, checkerTypeGetSize(stringType), false), ptrToElemSize);
-        }
+    //         LLVMBuildStore(builder, argcParam, ptrToLen);
+    //         LLVMBuildStore(builder, LLVMConstInt(int64typellvm, checkerTypeGetSize(stringType), false), ptrToElemSize);
+    //     }
 
-        { //emit global value initializers
-            NSTEntryLL *currNSEntryLL = namespaceTable->entries->first;
-            while(currNSEntryLL != NULL)
-            {
-                ASTProgLL *currProgLL = currNSEntryLL->item->progASTs;
-                if(currProgLL != NULL) currProgLL = currProgLL->first;
-                while(currProgLL != NULL)
-                {
-                    cgLLVMInitialValuesForProgGlobalVars(currProgLL->item->globalVarOrConstDecls);
-                    currProgLL = currProgLL->next;
-                }
+    //     { //emit global value initializers
+    //         NSTEntryLL *currNSEntryLL = namespaceTable->entries->first;
+    //         while(currNSEntryLL != NULL)
+    //         {
+    //             ASTProgLL *currProgLL = currNSEntryLL->item->progASTs;
+    //             if(currProgLL != NULL) currProgLL = currProgLL->first;
+    //             while(currProgLL != NULL)
+    //             {
+    //                 cgLLVMInitialValuesForProgGlobalVars(currProgLL->item->globalVarOrConstDecls);
+    //                 currProgLL = currProgLL->next;
+    //             }
 
-                currNSEntryLL = currNSEntryLL->next;
-            }
-        }
+    //             currNSEntryLL = currNSEntryLL->next;
+    //         }
+    //     }
 
-        LLVMValueRef retValue = LLVMBuildAlloca(builder, int64typellvm, "retValue");
+    //     LLVMValueRef retValue = LLVMBuildAlloca(builder, int64typellvm, "retValue");
 
-        LLVMValueRef globalMain = LLVMGetNamedFunction(module, "global_main");
+    //     LLVMValueRef globalMain = LLVMGetNamedFunction(module, "global_main");
 
-        if(globalMain != NULL)
-        {
-            LLVMValueRef globalMainFunResult;
-            LLVMValueRef globalMainFunResultAlloc = NULL;
+    //     if(globalMain != NULL)
+    //     {
+    //         LLVMValueRef globalMainFunResult;
+    //         LLVMValueRef globalMainFunResultAlloc = NULL;
 
-            LLVMValueRef args[1] =
-            {
-                arrayViewArgs,
-            };
+    //         LLVMValueRef args[1] =
+    //         {
+    //             arrayViewArgs,
+    //         };
             
-            if(globalContext.globalMainFuncTypeFlags.IS_VOID_PARAMS)
-            {
-                globalMainFunResult = LLVMBuildCall(builder, globalMain, NULL, 0, "");
-            }
-            else
-            {
-                globalMainFunResult = LLVMBuildCall(builder, globalMain, args, 1, "");
-            }
+    //         if(globalContext.globalMainFuncTypeFlags.IS_VOID_PARAMS)
+    //         {
+    //             globalMainFunResult = LLVMBuildCall(builder, globalMain, NULL, 0, "");
+    //         }
+    //         else
+    //         {
+    //             globalMainFunResult = LLVMBuildCall(builder, globalMain, args, 1, "");
+    //         }
 
-            if(globalContext.globalMainFuncTypeFlags.IS_VOID_RET) 
-            {
-                //exit success
-                LLVMBuildStore(builder, LLVMConstNull(int64typellvm), retValue);
-            }
-            else 
-            {
-                if(LLVMTypeOf( globalMainFunResult) != int64typellvm)
-                    LLVMBuildStore(builder, LLVMBuildZExt(builder, globalMainFunResult, int64typellvm, ""), retValue);
-                else LLVMBuildStore(builder, globalMainFunResult, retValue);
-            }
-        }
+    //         if(globalContext.globalMainFuncTypeFlags.IS_VOID_RET) 
+    //         {
+    //             //exit success
+    //             LLVMBuildStore(builder, LLVMConstNull(int64typellvm), retValue);
+    //         }
+    //         else 
+    //         {
+    //             if(LLVMTypeOf( globalMainFunResult) != int64typellvm)
+    //                 LLVMBuildStore(builder, LLVMBuildZExt(builder, globalMainFunResult, int64typellvm, ""), retValue);
+    //             else LLVMBuildStore(builder, globalMainFunResult, retValue);
+    //         }
+    //     }
 
-        LLVMValueRef freeFn = LLVMGetNamedFunction(module, "free");
-        { //free string args
-            LLVMValueRef freeArgs[1] =
-            {
-                LLVMBuildBitCast(builder, sargv, LLVMPointerType(LLVMInt8TypeInContext(context), 0), ""),
-            };
+    //     LLVMValueRef freeFn = LLVMGetNamedFunction(module, "free");
+    //     { //free string args
+    //         LLVMValueRef freeArgs[1] =
+    //         {
+    //             LLVMBuildBitCast(builder, sargv, LLVMPointerType(LLVMInt8TypeInContext(context), 0), ""),
+    //         };
 
-            LLVMBuildCall(builder, freeFn, freeArgs, 1, "");
-        }
+    //         LLVMBuildCall(builder, freeFn, freeArgs, 1, "");
+    //     }
 
-        LLVMBuildRet(builder, LLVMBuildLoad(builder, retValue, ""));
-    }
+    //     LLVMBuildRet(builder, LLVMBuildLoad(builder, retValue, ""));
+    // }
 
     //LLVMRunPassManager(modPassManager, module);
 
@@ -384,8 +384,10 @@ void cgLLVMEntireProgram(TypeTable *typeTable, NamespaceTable *namespaceTable)
     
     LLVMDIBuilderFinalize(debugBuilder);
     char *printModuleError = NULL;
+    char *printModuleVerify = NULL;
 
     LLVMPrintModuleToFile(module, outName, &printModuleError);
+    LLVMVerifyModule(module, LLVMPrintMessageAction, &printModuleVerify);
 
     char *error = NULL;
     sprintf(outName, "%s.obj", outputFilenameWithoutExt);
@@ -1495,48 +1497,66 @@ void cgLLVMDeclValueRef(ASTDecl *decl)
             else sprintf(buf, "%s_%s", decl->declType->namespaceName, decl->func.iden.lexeme);
 
             LLVMTypeRef t = cgLLVMCheckerTypeToTypeRef(decl->declType, true);
-            LLVMValueRef fnRef = LLVMAddFunction(module, buf, t);
+            LLVMValueRef fnRef = NULL;
             
-            cgLLVMAddParameterAttributes(fnRef, decl->declType->funcType.retABIInfo, true, 0);
+            bool runtimeSupportFuncExists = false;
+            if(CHECK_TYPE_FLAG(decl->declType, TYPE_RUNTIME_SUPPORT_AS))
+            {
+                LLVMValueRef r = LLVMGetNamedFunction(module, buf);
 
-
-            { //set parameter names and attrivutes
-                ScopedDeclLL *params = decl->declType->funcType.paramLL;
-                LLVMValueRef fnRefParam = NULL;
-
-                size_t index = decl->declType->funcType.retABIInfo->startIndex;
-                if(params != NULL)
+                if(r != NULL)
                 {
-                    params = params->first;
-
-                    fnRefParam = LLVMGetParam(fnRef, index);
+                    fnRef = r;
+                    runtimeSupportFuncExists = true;
                 }
-
-                while(params != NULL)
+                else
                 {
-                    if(isTypeVariadic(params->item->type))
+                    fnRef = LLVMAddFunction(module, buf, t);
+                }
+            }
+            else fnRef = LLVMAddFunction(module, buf, t);
+
+            if(!runtimeSupportFuncExists)
+            {
+                cgLLVMAddParameterAttributes(fnRef, decl->declType->funcType.retABIInfo, true, 0);
+
+
+                { //set parameter names and attrivutes
+                    ScopedDeclLL *params = decl->declType->funcType.paramLL;
+                    LLVMValueRef fnRefParam = NULL;
+
+                    size_t index = decl->declType->funcType.retABIInfo->startIndex;
+                    if(params != NULL)
                     {
+                        params = params->first;
+
+                        fnRefParam = LLVMGetParam(fnRef, index);
+                    }
+
+                    while(params != NULL)
+                    {
+                        if(isTypeVariadic(params->item->type))
+                        {
+                            index += 1;
+                            fnRefParam = LLVMGetParam(fnRef, index);
+                            params = params->next;
+                            continue;
+                        }
+
+                        LLVMSetValueName2(fnRefParam, params->item->name.lexeme, strlen(params->item->name.lexeme));
+
+                        cgLLVMAddParameterAttributes(fnRef, params->item->abiInfo, false, index + 1);
+
                         index += 1;
                         fnRefParam = LLVMGetParam(fnRef, index);
                         params = params->next;
-                        continue;
                     }
-
-                    LLVMSetValueName2(fnRefParam, params->item->name.lexeme, strlen(params->item->name.lexeme));
-
-                    cgLLVMAddParameterAttributes(fnRef, params->item->abiInfo, false, index + 1);
-
-                    index += 1;
-                    fnRefParam = LLVMGetParam(fnRef, index);
-                    params = params->next;
                 }
+
+                LLVMSetFunctionCallConv(fnRef, LLVMCCallConv);
             }
-
-            LLVMSetFunctionCallConv(fnRef, LLVMCCallConv);
-
             decl->declType->backendType = t;
             decl->backendValRef = fnRef;
-
             globalContext.gc.currFuncBeingGenerated = NULL;
         }break;
         case A_DECL_OPERATOR_FUNC:

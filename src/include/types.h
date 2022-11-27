@@ -22,8 +22,9 @@
 #define TYPE_FUNC_THIS_FLAG         (1 << 8)
 #define TYPE_FUNC_THISPTR_FLAG      (1 << 9)
 #define TYPE_FUNC_THIS_NONE_FLAG    (1 << 10)
-#define TYPE_TOSTRING_FUNC_FLAG    (1 << 11)
-#define TYPE_EXPORT_AS    (1 << 12)
+#define TYPE_TOSTRING_FUNC_FLAG     (1 << 11)
+#define TYPE_EXPORT_AS              (1 << 12)
+#define TYPE_RUNTIME_SUPPORT_AS     (1 << 13)
 #define CHECK_TYPE_FLAG(type, flag) ((type)->flags & (flag))
 #define SET_TYPE_FLAG(type, flag) ((type)->flags |= (flag))
 

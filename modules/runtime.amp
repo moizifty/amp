@@ -41,3 +41,14 @@ arrayGet(a: *void, arrSize: i64, index: i64, baseSize: i64, loc: SourceLoc) : *v
 
 	return a + (index * baseSize);
 }
+
+[foreign("")]
+[runtimeSupport]
+global_main() : void;
+
+[exportAs("main")]
+program_entry_point(argc: int, argv: **ui8) : int
+{
+	global_main();
+	return 0;
+}

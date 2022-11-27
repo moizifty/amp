@@ -805,9 +805,16 @@ void checkIncompleteFuncDecl(ASTDeclLL **decl)
                     globalContext.globalMainFuncType = e->type;
                     int flags = checkIfMainFuncHasCorrectSignature(e->type);
 
+                    if(flags & MAIN_FUNC_INCORRECT_PARAMS)
+                    {
+                         checkerErrorLn(d->startTok, "Expected main function to have exactly 0 parameters");
+
+                        prettyPrintCheckerSourceError(d->func.sig->startTok, d->func.sig->endTok);
+                    }
+
                     if(flags & MAIN_FUNC_INCORRECT_RET_TYPE)
                     {
-                        checkerError(d->startTok, "Expected main function to have integer or void return type but instead got: ");
+                        checkerError(d->startTok, "Expected main function to have void return type, instead got: ");
                         printCheckerType(e->type->funcType.ret);
 
                         fprintf(stderr, "\n");
@@ -815,13 +822,23 @@ void checkIncompleteFuncDecl(ASTDeclLL **decl)
                     }
                     else if(flags & MAIN_FUNC_HAS_VOID_RET) globalContext.globalMainFuncTypeFlags.IS_VOID_RET = true;
 
-                    if(flags & MAIN_FUNC_INCORRECT_PARAMS)
-                    {
-                        checkerErrorLn(d->startTok, "Expected main function to have exactly 1 parameter of type []string or exactly 0 parameters");
+                    // if(flags & MAIN_FUNC_INCORRECT_RET_TYPE)
+                    // {
+                    //     checkerError(d->startTok, "Expected main function to have integer or void return type but instead got: ");
+                    //     printCheckerType(e->type->funcType.ret);
 
-                        prettyPrintCheckerSourceError(d->func.sig->startTok, d->func.sig->endTok);
-                    }
-                    else if(flags & MAIN_FUNC_HAS_VOID_PARAMS) globalContext.globalMainFuncTypeFlags.IS_VOID_PARAMS = true;
+                    //     fprintf(stderr, "\n");
+                    //     prettyPrintCheckerSourceError(d->func.sig->retType->startTok, d->func.sig->retType->endTok);
+                    // }
+                    // else if(flags & MAIN_FUNC_HAS_VOID_RET) globalContext.globalMainFuncTypeFlags.IS_VOID_RET = true;
+
+                    // if(flags & MAIN_FUNC_INCORRECT_PARAMS)
+                    // {
+                    //     checkerErrorLn(d->startTok, "Expected main function to have exactly 1 parameter of type []string or exactly 0 parameters");
+
+                    //     prettyPrintCheckerSourceError(d->func.sig->startTok, d->func.sig->endTok);
+                    // }
+                    // else if(flags & MAIN_FUNC_HAS_VOID_PARAMS) globalContext.globalMainFuncTypeFlags.IS_VOID_PARAMS = true;
 
                 }
                 else if(!strcmp(d->tbl->belongsToNamespace->namespace, "prelude") && !strcmp(e->name, "equals"))
@@ -1133,6 +1150,10 @@ int checkDeclTags(ASTDecl *decl, ASTTagLL *tags)
             }
 
             flags |= TYPE_EXPORT_AS;
+        }
+        if(!strcmp(tagName, "runtimeSupport"))
+        {
+            flags |= TYPE_RUNTIME_SUPPORT_AS;
         }
         else if(!strcmp(tagName, "useNamespace")) flags |= TYPE_USE_NAMESPACE_FLAG;
         else if(!strcmp(tagName, "useReturn")) flags |= TYPE_FUNC_MUST_USE_RETURN;
@@ -6438,13 +6459,15 @@ void checkInsertAnyCastStmts(ASTExpr *expr)
 
 int checkIfMainFuncHasCorrectSignature(CheckerType *mainFuncType)
 {
+    // main should have no params and no return type.
+
     int retFlag = 0;
     ScopedDeclLL *paramsLL = mainFuncType->funcType.paramLL;
     CheckerType *retType = mainFuncType->funcType.ret;
 
     size_t numParams = (paramsLL == NULL) ? 0 : paramsLL->first->numItems;
 
-    if(!isTypeVoid(retType) && !isTypeInteger(retType))
+    if(!isTypeVoid(retType))
     {
         retFlag |= MAIN_FUNC_INCORRECT_RET_TYPE;
     }
@@ -6455,24 +6478,46 @@ int checkIfMainFuncHasCorrectSignature(CheckerType *mainFuncType)
 
     if(numParams != 0)
     {
-        if(numParams != 1) retFlag |= MAIN_FUNC_INCORRECT_PARAMS;
-        else
-        {
-            CheckerType *paramType = paramsLL->first->item->type;
-            bool success = false;
-            if(isTypeSliceArray(paramType))
-            {
-                CheckerType *arrType = (isTypeAliased(paramType)) ? getAliasedTypeBase(paramType) : paramType;
-
-                if(areTypesEqual(stringType, arrType->arrayType.base)) success = true;
-            }
-
-            if(!success) retFlag |= MAIN_FUNC_INCORRECT_PARAMS;
-        }
+        retFlag |= MAIN_FUNC_INCORRECT_PARAMS;
     }
     else retFlag |= MAIN_FUNC_HAS_VOID_PARAMS;
 
     return retFlag;
+    // int retFlag = 0;
+    // ScopedDeclLL *paramsLL = mainFuncType->funcType.paramLL;
+    // CheckerType *retType = mainFuncType->funcType.ret;
+
+    // size_t numParams = (paramsLL == NULL) ? 0 : paramsLL->first->numItems;
+
+    // if(!isTypeVoid(retType) && !isTypeInteger(retType))
+    // {
+    //     retFlag |= MAIN_FUNC_INCORRECT_RET_TYPE;
+    // }
+    // else
+    // {
+    //     if(isTypeVoid(retType)) retFlag |= MAIN_FUNC_HAS_VOID_RET;
+    // }
+
+    // if(numParams != 0)
+    // {
+    //     if(numParams != 1) retFlag |= MAIN_FUNC_INCORRECT_PARAMS;
+    //     else
+    //     {
+    //         CheckerType *paramType = paramsLL->first->item->type;
+    //         bool success = false;
+    //         if(isTypeSliceArray(paramType))
+    //         {
+    //             CheckerType *arrType = (isTypeAliased(paramType)) ? getAliasedTypeBase(paramType) : paramType;
+
+    //             if(areTypesEqual(stringType, arrType->arrayType.base)) success = true;
+    //         }
+
+    //         if(!success) retFlag |= MAIN_FUNC_INCORRECT_PARAMS;
+    //     }
+    // }
+    // else retFlag |= MAIN_FUNC_HAS_VOID_PARAMS;
+
+    // return retFlag;
 }
 
 SymEntry *checkTryfindOverloadFunc(TokType op, CheckerType *a, CheckerType *b)

@@ -27,9 +27,6 @@ enum FileCreation
     EraseExisting;
 }
 
-stdout := __openStdOut();
-stdin := __openStdIn();
-
 __openStdOut() : file
 {
     return {handle = cast(i64) ((cast(* i64)w::GetStdHandle(w::StdHandle.Out))), mode = FileMode.Write};
@@ -166,6 +163,7 @@ method file
 
 print(fmt: string, va: ..any)
 {
+    stdout := __openStdOut();
     stdout.write(fmt, ..va);
 }
 
@@ -178,6 +176,7 @@ printLn(fmt: string = "", va: ..any)
 readChar() : i32
 {
     // readBytes(dest: *void, bytesToRead: ui32) : i64
+    stdin := __openStdOut();
 
     dest: i32 = 0;
     stdin.readBytes(*dest, 1);

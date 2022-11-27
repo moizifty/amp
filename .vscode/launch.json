@@ -11,12 +11,12 @@
             "program": "${workspaceFolder}\\bin\\compiler.exe",
             "args": [
                 //"${workspaceFolder}\\tests\\raylibexamples\\snake\\main.amp"
-                "${workspaceFolder}\\SingleTest\\test.amp",
-                "-out",
-                "\"build/dmfmdmf\"",
-                "-createOutDir",
-                "-linkArgs" ,
-                "/DEBUG",
+                //"${workspaceFolder}\\SingleTest\\test.amp",
+                // "-out",
+                // "\"build/dmfmdmf\"",
+                // "-createOutDir",
+                // "-linkArgs" ,
+                // "/DEBUG",
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
