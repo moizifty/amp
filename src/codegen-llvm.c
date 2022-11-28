@@ -1500,7 +1500,7 @@ void cgLLVMDeclValueRef(ASTDecl *decl)
             LLVMValueRef fnRef = NULL;
             
             bool runtimeSupportFuncExists = false;
-            if(CHECK_TYPE_FLAG(decl->declType, TYPE_RUNTIME_SUPPORT_AS))
+            if(CHECK_TYPE_FLAG(decl->declType, TYPE_RUNTIME_SUPPORT_FLAG))
             {
                 LLVMValueRef r = LLVMGetNamedFunction(module, buf);
 

@@ -772,9 +772,10 @@ void checkIncompleteFuncDecl(ASTDeclLL **decl)
                 }
 
                 bool isForeign = declFlags & TYPE_FOREIGN_FLAG;
-                if(!isForeign && (d->func.block == NULL))
+                bool isCompilerDef = declFlags & TYPE_COMPILERDEF_FLAG;
+                if(!(isForeign || isCompilerDef) && (d->func.block == NULL))
                 {
-                    checkerErrorLn(d->startTok, "function '%s' is not foreign, hence is not allowed to have no body, if it was intended to be foreign, put a [foreign] tag above", d->func.iden.lexeme);
+                    checkerErrorLn(d->startTok, "function '%s' is not foreign or a compiler defined function, hence is not allowed to have no body.", d->func.iden.lexeme);
                     prettyPrintCheckerSourceError(d->startTok, d->endTok);
                 }
                 else if(isForeign && (d->func.block != NULL))
@@ -1153,7 +1154,11 @@ int checkDeclTags(ASTDecl *decl, ASTTagLL *tags)
         }
         if(!strcmp(tagName, "runtimeSupport"))
         {
-            flags |= TYPE_RUNTIME_SUPPORT_AS;
+            flags |= TYPE_RUNTIME_SUPPORT_FLAG;
+        }
+        if(!strcmp(tagName, "compilerDef"))
+        {
+            flags |= TYPE_COMPILERDEF_FLAG;
         }
         else if(!strcmp(tagName, "useNamespace")) flags |= TYPE_USE_NAMESPACE_FLAG;
         else if(!strcmp(tagName, "useReturn")) flags |= TYPE_FUNC_MUST_USE_RETURN;

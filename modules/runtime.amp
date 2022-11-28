@@ -42,13 +42,26 @@ arrayGet(a: *void, arrSize: i64, index: i64, baseSize: i64, loc: SourceLoc) : *v
 	return a + (index * baseSize);
 }
 
+[compilerDef]
+{
+	program_init() : void;
+	program_deinit() : void;
+}
+
 [foreign("")]
 [runtimeSupport]
-global_main() : void;
+{
+	global_main() : void;
+}
 
 [exportAs("main")]
 program_entry_point(argc: int, argv: **ui8) : int
 {
+	
+	// program_init();
+
 	global_main();
+	
+	// program_deinit();
 	return 0;
 }

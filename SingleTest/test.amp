@@ -16,8 +16,4 @@ main()
     aas := "moiz";
 
     b := cast(*string) null;
-
-    p := cast(*int) (0x7c00);
-
-    io::print("len: %", p);
 }
