@@ -2409,94 +2409,12 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
             }
 
             expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE; 
+            expr->isExprConst = true;
         }break;
 
         case A_EXPR_IDEN:
         {
-            if(globalContext.cc.currScopedExpr.isCheckingScopeExpr)
-                globalContext.cc.currScopedExpr.scopeNameBeingChecked = expr->iden;
-            
-            SymEntry *entry = _symTableLookUp(globalContext.cc.checkingLocalsSymTble, expr->iden.lexeme, LOOKUP_ALL);
-            
-            if(entry == NULL)
-            {
-                entry = _symTableLookUp(globalContext.symTable, expr->iden.lexeme, LOOKUP_ALL);
-                if(entry != NULL)
-                {
-                    if(!isTypeFunction(entry->type)) entry = NULL; //try find operator overload
-                }
-            }
-            
-            if((expr->checkType != NULL) && (expr->idenSymEntry != NULL)) 
-            {
-                return;
-            }
-
-            if(entry != NULL)
-            {
-                if(entry->mySymTable != NULL)
-                {
-                    if(entry->mySymTable->belongsToNamespace != NULL) 
-                    {
-                        if(entry->isGlobal || entry->isGlobalFunc) entry->mySymTable->belongsToNamespace->isOtherSymbolsUsed = true;
-                    }
-                }
-
-                expr->checkType = entry->type;
-                
-                // if(entry->type->kind == C_TYPE_ENUM_MEMBER)
-                // {
-                //     expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                //     expr->compTimeVal.i = entry->type->enumMembType.val;
-                //     expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-
-                //     expr->checkType = entry->type->enumMembType.enumtype;
-                // }
-                // else 
-                if(entry->isConst) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                else if(entry->isActualConst)
-                {
-                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                    expr->compTimeVal = entry->constVal;
-                }
-                else if(entry->isType) expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
-                else if(entry->isNamespace || isTypeNamespace(entry->type)) 
-                {
-                    expr->checkType = namespaceInfoType;
-                    expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
-                    entry->type->namespaceType.tble->belongsToNamespace->isImported = true;
-                }
-                else //if global and local
-                {
-                    //check if its a function (but not a function pointer), if so,  then set to rvalue
-                    if(isTypeFunction(expr->checkType))
-                    {
-                        if(entry->isGlobalFunc)
-                            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                        else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-                    }
-                    else if(isTypeEnum(expr->checkType) && entry->isUnscopedEnumMemb)
-                    {
-                        size_t index = 0;
-                        typeHasMember(expr->checkType, entry->name, &index);
-
-                        EnumMembLL *memb = getEnumMembLLAt(entry->type->enumType.membLL, index);
-                        expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
-                        expr->compTimeVal.i = memb->item->val;
-                        expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
-                    }
-                    else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-                }
-
-                expr->idenSymEntry = entry;
-            }
-            else
-            {
-                checkerErrorLn(expr->iden, "Use of undeclared identifier '%s'", expr->iden.lexeme);
-                prettyPrintCheckerSourceError(expr->startTok, expr->startTok);
-                expr->checkType = NULL;
-            }
-            break;
+            checkIdenExpr(expr, isIncompletePass);
         }break;
 
         case A_EXPR_INDEX_REF:
@@ -4427,6 +4345,83 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
         }break;
     }
 }
+void checkIdenExpr(ASTExpr *expr, bool isIncompletePass)
+{
+    if(globalContext.cc.currScopedExpr.isCheckingScopeExpr)
+        globalContext.cc.currScopedExpr.scopeNameBeingChecked = expr->iden;
+    
+    SymEntry *entry = _symTableLookUp(globalContext.cc.checkingLocalsSymTble, expr->iden.lexeme, LOOKUP_ALL);
+    
+    if(entry == NULL)
+    {
+        entry = _symTableLookUp(globalContext.symTable, expr->iden.lexeme, LOOKUP_ALL);
+        if(entry != NULL)
+        {
+            if(!isTypeFunction(entry->type)) entry = NULL; //try find operator overload
+        }
+    }
+    
+    if((expr->checkType != NULL) && (expr->idenSymEntry != NULL)) 
+    {
+        return;
+    }
+
+    if(entry != NULL)
+    {
+        if(entry->mySymTable != NULL)
+        {
+            if(entry->mySymTable->belongsToNamespace != NULL) 
+            {
+                if(entry->isGlobal || entry->isGlobalFunc) entry->mySymTable->belongsToNamespace->isOtherSymbolsUsed = true;
+            }
+        }
+
+        expr->checkType = entry->type;
+        
+        if(entry->isConst) expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+        else if(entry->isActualConst)
+        {
+            expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+            expr->compTimeVal = entry->constVal;
+        }
+        else if(entry->isType) expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
+        else if(entry->isNamespace || isTypeNamespace(entry->type)) 
+        {
+            expr->checkType = namespaceInfoType;
+            expr->compTimeVal.isL_or_RValue = EXPR_NEITHER_VALUE;
+            entry->type->namespaceType.tble->belongsToNamespace->isImported = true;
+        }
+        else //if global and local
+        {
+            //check if its a function (but not a function pointer), if so,  then set to rvalue
+            if(isTypeFunction(expr->checkType))
+            {
+                if(entry->isGlobalFunc)
+                    expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+                else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+            }
+            else if(isTypeEnum(expr->checkType) && entry->isUnscopedEnumMemb)
+            {
+                size_t index = 0;
+                typeHasMember(expr->checkType, entry->name, &index);
+
+                EnumMembLL *memb = getEnumMembLLAt(entry->type->enumType.membLL, index);
+                expr->compTimeVal.kind = A_EXPR_COMP_TIME_INT;
+                expr->compTimeVal.i = memb->item->val;
+                expr->compTimeVal.isL_or_RValue = EXPR_R_VALUE;
+            }
+            else expr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+        }
+
+        expr->idenSymEntry = entry;
+    }
+    else
+    {
+        checkerErrorLn(expr->iden, "Use of undeclared identifier '%s'", expr->iden.lexeme);
+        prettyPrintCheckerSourceError(expr->startTok, expr->startTok);
+        expr->checkType = NULL;
+    }
+}
 void checkMembAccessExpr(ASTExpr *expr, bool isIncompletePass)
 {
     checkExpr(expr->membAccess.typeName, isIncompletePass);
@@ -5155,54 +5150,6 @@ bool checkInferredExpr(CheckerType *inferredType, ASTExpr **expr, bool shouldIns
 
     if((inferredType != NULL) && !areTypesEqual(inferredType, e->checkType) && castExpression)
     {
-        {
-        // *expr = newASTExprCast(NULL, e);
-        // (*expr)->checkType = inferredType;
-        // (*expr)->endTok = e->endTok;
-        // (*expr)->compTimeVal = e->compTimeVal;
-
-        // if(isTypeStruct(inferredType) || isTypeUnion(inferredType))
-        // {
-        //     (*expr)->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-        // }
-        // else if(e->compTimeVal.kind != A_EXPR_COMP_TIME_RUNTIME)
-        // {
-        //     switch(e->compTimeVal.kind)
-        //     {
-        //         case A_EXPR_COMP_TIME_BOOL: break; //bool comptime is stored as int so its fine
-        //         case A_EXPR_COMP_TIME_INT:
-        //         {
-        //             if(isTypeFloat(inferredType))
-        //             {
-        //                 (*expr)->compTimeVal.f = e->compTimeVal.i;
-        //                 (*expr)->compTimeVal.kind = A_EXPR_COMP_TIME_FLOAT;
-        //             }
-        //         }break;
-        //     }
-        // }
-
-        // if((inferredType == anyType) && (e->compTimeVal.isL_or_RValue == EXPR_R_VALUE))
-        // {
-        //     char *anyLitName = allocNewAnyLitIden();
-            
-        //     if(cc.currStmtBeingChecked != NULL)
-        //     {
-        //         Token varName = e->startTok;
-        //         varName.type = TOK_IDEN;
-        //         strcpy(varName.lexeme, anyLitName);
-
-        //         ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(varName, newASTTypeInfer(varName), e));
-        //         varDeclStmt->decl.decl->var.type->checkType = e->checkType;
-
-        //         ASTStmtLL *varDeclToInsert = newASTStmtLL(varDeclStmt);
-
-        //         insertBeforeASTStmtLL(cc.currStmtBeingChecked, varDeclToInsert);
-        //     }
-        //     else (*expr)->genAnyCastForDefaultValueExpr = true; //for expressiosn which are default values for params and struct membs
-
-        //     e->genIdenName = anyLitName;
-        // }
-        }
         checkInsertCastExpr(inferredType, expr);
     }
     return true;
@@ -6488,41 +6435,6 @@ int checkIfMainFuncHasCorrectSignature(CheckerType *mainFuncType)
     else retFlag |= MAIN_FUNC_HAS_VOID_PARAMS;
 
     return retFlag;
-    // int retFlag = 0;
-    // ScopedDeclLL *paramsLL = mainFuncType->funcType.paramLL;
-    // CheckerType *retType = mainFuncType->funcType.ret;
-
-    // size_t numParams = (paramsLL == NULL) ? 0 : paramsLL->first->numItems;
-
-    // if(!isTypeVoid(retType) && !isTypeInteger(retType))
-    // {
-    //     retFlag |= MAIN_FUNC_INCORRECT_RET_TYPE;
-    // }
-    // else
-    // {
-    //     if(isTypeVoid(retType)) retFlag |= MAIN_FUNC_HAS_VOID_RET;
-    // }
-
-    // if(numParams != 0)
-    // {
-    //     if(numParams != 1) retFlag |= MAIN_FUNC_INCORRECT_PARAMS;
-    //     else
-    //     {
-    //         CheckerType *paramType = paramsLL->first->item->type;
-    //         bool success = false;
-    //         if(isTypeSliceArray(paramType))
-    //         {
-    //             CheckerType *arrType = (isTypeAliased(paramType)) ? getAliasedTypeBase(paramType) : paramType;
-
-    //             if(areTypesEqual(stringType, arrType->arrayType.base)) success = true;
-    //         }
-
-    //         if(!success) retFlag |= MAIN_FUNC_INCORRECT_PARAMS;
-    //     }
-    // }
-    // else retFlag |= MAIN_FUNC_HAS_VOID_PARAMS;
-
-    // return retFlag;
 }
 
 SymEntry *checkTryfindOverloadFunc(TokType op, CheckerType *a, CheckerType *b)

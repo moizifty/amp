@@ -12,7 +12,8 @@ ASTExpr *allocASTExpr(ASTExprKind kind, Token startTok)
     expr->genAnyCastForDefaultValueExpr = false;
     expr->idenSymEntry = NULL;
     expr->genFuncRetAsArgForDefaultValueExpr = false;
-
+    expr->isExprConst = false;
+    
     return expr;
 }
 void freeASTExpr(ASTExpr **expr)
@@ -1150,6 +1151,18 @@ ASTDecl *newASTDeclVar(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial)
     
     return d;
 }
+ASTDecl *newASTDeclImmut(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial)
+{
+    ASTDecl *d = allocASTDecl(A_DECL_IMMUT, idenExpr->startTok);
+
+    d->immut.idenExpr = idenExpr;
+    d->immut.type = type;
+    d->immut.initial = initial;
+    d->immut.isUsingDecl = false;
+    
+    return d;
+}
+
 ASTDecl *newASTDeclConst(Token name, ASTType *type, ASTExpr *initial)
 {
     ASTDecl *d = allocASTDecl(A_DECL_CONST, name);
@@ -1597,6 +1610,33 @@ ASTTagParamLL *newASTTagParamLL(Token item)
 void addASTTagParamLL(ASTTagParamLL **ll, Token item)
 {
     ASTTagParamLL *n = newASTTagParamLL(item);
+
+    if((*ll)->prev == NULL)
+        (*ll)->first = *ll;
+
+    (*ll)->next = n;
+    n->prev = (*ll);
+    n->first = (*ll)->first;
+    n->first->numItems = n->numItems = (*ll)->numItems + 1;
+
+    (*ll) = n;
+}
+
+TokenLL *newTokenLL(Token item)
+{
+    TokenLL *ll = malloc(sizeof(TokenLL));
+    ll->next = NULL;
+    ll->prev = NULL;
+    ll->item = item;
+
+    ll->numItems = 1;
+    ll->first = ll;
+
+    return ll;
+}
+void addTokenLL(TokenLL **ll, Token item)
+{
+    TokenLL *n = newTokenLL(item);
 
     if((*ll)->prev == NULL)
         (*ll)->first = *ll;

@@ -884,7 +884,25 @@ ASTDecl *operatorDecl(void)
     return newASTDeclOperFunc(op, sig, b);
 }
 
-ASTDecl *varDeclWithExprIden(ASTExpr *idenExpr)
+TokenLL *declSpecifiers(void)
+{
+    // ADD CONST HERE TOO
+    if((tok.type == TOK_IMMUT_KW))
+    {
+        TokenLL *ll = newTokenLL(tok);
+
+        tok = lex();
+        while(tok.type == TOK_IMMUT_KW)
+        {
+            addTokenLL(&ll, tok);
+            tok = lex();
+        }
+
+        return ll;
+    }
+    else return NULL;
+}
+ASTDecl *varDeclWithExprIden(ASTExpr *idenExpr, TokenLL *specifiers)
 {
     ASTType *type = NULL;
     ASTExpr *initial = NULL;
@@ -950,9 +968,11 @@ ASTDecl *varDecl(bool isStructUnionMember)
         }
     }
 
+    TokenLL *specifiers = declSpecifiers();
+
     idenExpr = primaryTerm();
     
-    ASTDecl *d = varDeclWithExprIden(idenExpr);
+    ASTDecl *d = varDeclWithExprIden(idenExpr, specifiers);
 
     return d;
 }
@@ -1336,12 +1356,13 @@ ASTStmt *stmt(void)
         {
             ASTExpr *l = NULL;
             ASTExpr *r = NULL;
+            TokenLL *specifiers = declSpecifiers();
 
             l = expr();
             
             if(tok.type == ':')
             {
-                s = newASTStmtDecl(varDeclWithExprIden(l));
+                s = newASTStmtDecl(varDeclWithExprIden(l, specifiers));
             }
             else 
             {
@@ -1841,6 +1862,11 @@ ASTType *typeSpec(void)
     t->endTok = tok;
     return t;
 }
+ASTType *arrayTypeSpecFromSizeAndBase(ASTExpr *size, ASTType *base, Token startTok)
+{
+    bool isSlice = (size == NULL);
+    return newASTTypeArray(startTok, size, base, isSlice);
+}
 ASTType *arrayTypeSpec(void)
 {
     ASTExpr *size = NULL;
@@ -1860,7 +1886,7 @@ ASTType *arrayTypeSpec(void)
         if(tok.type == ']')
         {
             tok = lex();
-            type = newASTTypeArray(startTok, size, typeSpec(), isSlice);
+            type = arrayTypeSpecFromSizeAndBase(size, typeSpec(), startTok);
         }
         else parserError(tok, "Expected a matching ']' but instead got %s", tok.lexeme);
     }
@@ -2524,10 +2550,16 @@ ASTExpr *primaryTerm(void)
 
                 if(tok.type == '}') tok = lex();
                 else parserError(tok, "Expected matching '}' for array literal, but instead got '%s'", tok.lexeme);
-            }
-            else parserError(tok, "Expected '{' for array literal but instead got %s", tok.lexeme);
 
-            e = newASTExprArrayLit(startTok, sizeExpr, baseType, ll);
+                e = newASTExprArrayLit(startTok, sizeExpr, baseType, ll);
+            }
+            else /// parse array type expr
+            {
+                ASTType *arrayType = arrayTypeSpecFromSizeAndBase(sizeExpr, baseType, startTok);
+
+                e = newASTExprTypeIntro(arrayType);
+            }
+
         }
         else parserError(tok, "Expected matching ']' for array literal - [size]basetype{expressions}, instead got '%s'", tok.lexeme);
     }

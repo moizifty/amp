@@ -37,6 +37,8 @@ Token declTagParam(void);
 ASTDecl *importDecl(void);
 ASTDecl *funcDecl(void);
 ASTDecl *operatorDecl(void);
+
+TokenLL *declSpecifiers(void);
 ASTDecl *varDecl(bool isStructUnionMember);
 ASTDecl *constDecl(void);
 ASTDecl *typealiasDecl(void);

@@ -11,9 +11,15 @@ enum e1
 
 main()
 {
-    io::print("%", os::getCommandlineArg());
-    a := "moiz";
+    io::printLn("%", os::getCommandlineArg());
+    immut a := "moiz";
     aas := "moiz";
 
     b := cast(*string) null;
+
+    av: []int = []{1, 23, 23,121233, 3};
+
+    avv := cast (* [5] int) av.data;
+
+    io::printLn("%", @avv);
 }

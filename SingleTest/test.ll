@@ -1889,7 +1889,7 @@ entry:
   store i64 1, i64* %15, align 8
   store i8* %__arrViewData, i8** %16, align 8
   store i64 ptrtoint (%prelude_any* getelementptr (%prelude_any, %prelude_any* null, i32 1) to i64), i64* %17, align 8
-  call void @std_io_printLn(%prelude_string* %_strLit, %prelude_ArrayView* %__arrView)
+  call void @std_io_print(%prelude_string* %_strLit, %prelude_ArrayView* %__arrView)
   %18 = getelementptr inbounds %prelude_string, %prelude_string* %_strLit2, i32 0, i32 0
   store i8* getelementptr inbounds ([5 x i8], [5 x i8]* @__strdata14275953966313969644_3, i32 0, i32 0), i8** %18, align 8
   %19 = getelementptr inbounds %prelude_string, %prelude_string* %_strLit2, i32 0, i32 1
@@ -1960,7 +1960,7 @@ entry:
   store i64 1, i64* %52, align 8
   store i8* %__arrViewData13, i8** %53, align 8
   store i64 ptrtoint (%prelude_any* getelementptr (%prelude_any, %prelude_any* null, i32 1) to i64), i64* %54, align 8
-  call void @std_io_printLn(%prelude_string* %_strLit7, %prelude_ArrayView* %__arrView12)
+  call void @std_io_print(%prelude_string* %_strLit7, %prelude_ArrayView* %__arrView12)
   ret void
 }
 

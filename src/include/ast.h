@@ -52,7 +52,6 @@ typedef struct ASTTagLL ASTTagLL;
 
 typedef struct ASTTagParamLL ASTTagParamLL;
 
-
 typedef struct ASTEnumMembLL  ASTEnumMembLL;
 
 typedef struct ASTEnumMemb  ASTEnumMemb;
@@ -72,6 +71,9 @@ typedef struct ASTProg ASTProg;
 typedef struct ASTProgLL ASTProgLL;
 
 typedef struct ASTNamespaceName ASTNamespaceName;
+
+typedef struct TokenLL TokenLL;
+
 
 #include "types.h"
 
@@ -124,7 +126,7 @@ struct ASTExpr
 
     SymEntry *idenSymEntry;
     CompTimeVal compTimeVal;
-
+    bool isExprConst; // does the expression contain only contains expressions or is constant
     union
     {
         Token lit;    
@@ -623,6 +625,7 @@ struct ASTMatchArm
 enum ASTDeclKind
 {
     A_DECL_VAR,
+    A_DECL_IMMUT,
     A_DECL_CONST,
     A_DECL_TYPE,
     A_DECL_FUNC,
@@ -669,6 +672,15 @@ struct ASTDecl
             //any literal / func statements for global vars tht should be genenrated before global var
             ASTStmtLL *globalVarInitialCodeGenStmts;
         }var;
+
+        struct
+        {
+            ASTExpr *idenExpr;
+            ASTType *type;
+            ASTExpr *initial;
+
+            bool isUsingDecl; //is a using decl inside struct
+        }immut;
 
         struct
         {
@@ -912,6 +924,16 @@ struct ASTNamespaceName
     struct ASTNamespaceName *scopedChild;
 };
 
+struct TokenLL
+{
+    Token item;
+    struct TokenLL *prev;
+    struct TokenLL *next;
+
+    size_t numItems; //only true for last item in list, rest items have old item count
+    struct TokenLL *first; //first item in ll
+};
+
 ASTExpr *allocASTExpr(ASTExprKind kind, Token startTok);
 void freeASTExpr(ASTExpr **expr);
 
@@ -1036,6 +1058,7 @@ void addASTMatchArmlLL(ASTMatchArmLL **ll, ASTMatchArm *item);
 
 ASTDecl *allocASTDecl(ASTDeclKind kind, Token startTok);
 ASTDecl *newASTDeclVar(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial);
+ASTDecl *newASTDeclImmut(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial);
 ASTDecl *newASTDeclConst(Token name, ASTType *type, ASTExpr *initial);
 ASTDecl *newASTDeclType(Token name, ASTType *type);
 ASTDecl *newASTDeclFunc(Token iden, ASTGenericTypeLL *genParams, ASTFuncSig *sig, ASTBlock *block, bool mustReturn);
@@ -1074,9 +1097,10 @@ void insertAfterASTTagLL(ASTTagLL *before, ASTTagLL *toInsert);
 ASTTagParamLL *newASTTagParamLL(Token item);
 void addASTTagParamLL(ASTTagParamLL **ll, Token item);
 
+TokenLL *newTokenLL(Token item);
+void addTokenLL(TokenLL **ll, Token item);
 
 ASTEnumMemb *newASTEnumMemb(Token name, ASTExpr *val);
-
 ASTEnumMembLL *newASTEnumMembLL(ASTEnumMemb *item);
 void addASTEnumMembLL(ASTEnumMembLL **ll, ASTEnumMemb *item);
 

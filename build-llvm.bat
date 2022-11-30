@@ -6,4 +6,4 @@ cl /F 10000000 /Fe:bin\compiler.exe /Fo:builddir\ /Zi external\inih\*.c src\*.c 
 
 del vc*.pdb
 @echo on
-bin\compiler.exe
+bin\compiler.exe -out "amp_test_builds/main" -createOutDir
