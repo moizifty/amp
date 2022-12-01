@@ -15,11 +15,11 @@ main()
     immut a := "moiz";
     aas := "moiz";
 
-    b := cast(*string) null;
+    bomb := (23022, 2);
 
-    av: []int = []{1, 23, 23,121233, 3};
+    av: []int = []{1, 23, 23, 121233, 3};
 
     avv := cast (* [5] int) av.data;
 
-    io::printLn("%", @avv);
+    io::printLn("%", bomb);
 }
