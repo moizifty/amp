@@ -2550,16 +2550,10 @@ ASTExpr *primaryTerm(void)
 
                 if(tok.type == '}') tok = lex();
                 else parserError(tok, "Expected matching '}' for array literal, but instead got '%s'", tok.lexeme);
-
-                e = newASTExprArrayLit(startTok, sizeExpr, baseType, ll);
             }
-            else /// parse array type expr
-            {
-                ASTType *arrayType = arrayTypeSpecFromSizeAndBase(sizeExpr, baseType, startTok);
+            else parserError(tok, "Expected '{' for array literal but instead got %s", tok.lexeme);
 
-                e = newASTExprTypeIntro(arrayType);
-            }
-
+            e = newASTExprArrayLit(startTok, sizeExpr, baseType, ll);
         }
         else parserError(tok, "Expected matching ']' for array literal - [size]basetype{expressions}, instead got '%s'", tok.lexeme);
     }
