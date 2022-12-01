@@ -1,8 +1,6 @@
 # To-do
 ---
-- [ ] when assigning arrays to struct members in literal
-      make it generate a memcpy;
-- [ ] struct members that are pointers to functions are order dependendent
+- [ ] struct members that are pointers to functions are order dependendent right now, fix this
 - [ ] generics
 - [ ] nullables
 - [ ] Add bool to expression ast which determines if the expression is made up of constants or not, eg 90, {0, 1}
