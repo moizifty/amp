@@ -1139,7 +1139,7 @@ ASTDecl *allocASTDecl(ASTDeclKind kind, Token startTok)
 
     return decl;
 }
-ASTDecl *newASTDeclVar(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial)
+ASTDecl *newASTDeclVar(TokenLL* declSpecs, ASTExpr *idenExpr, ASTType *type, ASTExpr *initial)
 {
     ASTDecl *d = allocASTDecl(A_DECL_VAR, idenExpr->startTok);
 
@@ -1148,29 +1148,8 @@ ASTDecl *newASTDeclVar(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial)
     d->var.initial = initial;
     d->var.isUsingDecl = false;
     d->var.globalVarInitialCodeGenStmts = NULL;
+    d->var.specifierFlags = 0;
     
-    return d;
-}
-ASTDecl *newASTDeclImmut(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial)
-{
-    ASTDecl *d = allocASTDecl(A_DECL_IMMUT, idenExpr->startTok);
-
-    d->immut.idenExpr = idenExpr;
-    d->immut.type = type;
-    d->immut.initial = initial;
-    d->immut.isUsingDecl = false;
-    
-    return d;
-}
-
-ASTDecl *newASTDeclConst(Token name, ASTType *type, ASTExpr *initial)
-{
-    ASTDecl *d = allocASTDecl(A_DECL_CONST, name);
-
-    d->constDecl.iden = name;
-    d->constDecl.type = type;
-    d->constDecl.initial = initial;
-
     return d;
 }
 ASTDecl *newASTDeclType(Token name, ASTType *type)

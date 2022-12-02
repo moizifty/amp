@@ -60,7 +60,6 @@ int checkDeclTags(ASTDecl *decl, ASTTagLL *tags);
 int checkScopedDeclTags(ASTDecl *decl);
 
 void checkLocalDeclVar(ASTDecl *decl);
-void checkLocalDeclConst(ASTDecl *decl);
 
 void checkDeclEnum(ASTDecl *decl, bool isGlobalDecl);
 

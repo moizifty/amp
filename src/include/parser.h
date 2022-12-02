@@ -40,7 +40,6 @@ ASTDecl *operatorDecl(void);
 
 TokenLL *declSpecifiers(void);
 ASTDecl *varDecl(bool isStructUnionMember);
-ASTDecl *constDecl(void);
 ASTDecl *typealiasDecl(void);
 ASTDecl *structDecl(void);
 ASTDecl *unionDecl(void);

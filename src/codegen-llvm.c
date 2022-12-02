@@ -57,21 +57,21 @@ void cgLLVMInitialValuesForProgGlobalVars(ASTDeclLL *globalVarConstLL)
                     cgLLVMStmt(assignStmt);
                 }
             }break;
-            case A_DECL_CONST:
-            {
-                if(d->constDecl.initial != NULL)
-                {
-                    ASTExpr *idenExpr = newASTExprIden(d->constDecl.iden);
-                    idenExpr->checkType = d->constDecl.type->checkType;
-                    idenExpr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
-                    idenExpr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
-                    idenExpr->idenSymEntry = _symTableLookupGlobal(d->tbl, d->constDecl.iden.lexeme);
+            // case A_DECL_CONST:
+            // {
+            //     if(d->constDecl.initial != NULL)
+            //     {
+            //         ASTExpr *idenExpr = newASTExprIden(d->constDecl.iden);
+            //         idenExpr->checkType = d->constDecl.type->checkType;
+            //         idenExpr->compTimeVal.isL_or_RValue = EXPR_L_VALUE;
+            //         idenExpr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
+            //         idenExpr->idenSymEntry = _symTableLookupGlobal(d->tbl, d->constDecl.iden.lexeme);
                     
-                    ASTStmt *assignStmt = newASTStmtAssign(idenExpr, d->constDecl.initial);
+            //         ASTStmt *assignStmt = newASTStmtAssign(idenExpr, d->constDecl.initial);
 
-                    cgLLVMStmt(assignStmt);
-                }
-            }break;
+            //         cgLLVMStmt(assignStmt);
+            //     }
+            // }break;
         }
 
         currDecl = currDecl->next;
@@ -1558,7 +1558,7 @@ void cgLLVMProg(ASTProg *p)
     //outputFile = stderr;
     while(currDecl != NULL)
     {
-        if(((currDecl->item->kind != A_DECL_VAR) && (currDecl->item->kind != A_DECL_CONST)) && (currDecl->item->genParams == NULL))
+        if((currDecl->item->kind != A_DECL_VAR) && (currDecl->item->genParams == NULL))
         { 
             if((currDecl->item->kind == A_DECL_FUNC) || (currDecl->item->kind == A_DECL_OPERATOR_FUNC))
             {

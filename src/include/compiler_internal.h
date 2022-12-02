@@ -21,6 +21,9 @@
 #define STRCMP_PRELUDE_FUNC_NAME (OPERFUNC_EQ_OP_NAME "_prelude_s_string_prelude_s_string_")
 #define NSTRCMP_PRELUDE_FUNC_NAME (OPERFUNC_NEQ_OP_NAME "_prelude_s_string_prelude_s_string_")
 #define PRELUDE_EQ_FUNC_NAME ("prelude_equals")
+
+typedef uint64_t flagtype;
+
 //whats being parsed right now
 typedef enum ParsingKind
 {

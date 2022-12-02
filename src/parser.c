@@ -122,6 +122,17 @@ void parserError(Token tok, char *msg, ...)
     //unrechable
 }
 
+bool findDeclSpecifierInTokenList(TokenLL *specs, TokType specToFind)
+{
+    TokenLL *curr = specs;
+    while(curr != NULL)
+    {
+        if(curr->item.type == specToFind) return true;
+        curr = curr->next;
+    }
+
+    return false;
+}
 void collectDecls(ASTProg *prog, ASTDeclLL *declLL)
 {
     if(declLL == NULL) return;
@@ -163,11 +174,19 @@ void collectDecls(ASTProg *prog, ASTDeclLL *declLL)
                 else addASTDeclLL(&prog->globalFuncDecls, d);
                 
             }break;
-            case A_DECL_VAR: case A_DECL_CONST:
+            case A_DECL_VAR:
             {
+                bool isConst = findDeclSpecifierInTokenList(d->var.specifiers, TOK_CONST_KW);
+                bool isImmut = findDeclSpecifierInTokenList(d->var.specifiers, TOK_IMMUT_KW);
+
+                if(isConst) 
+                    d->var.specifierFlags |= A_DECL_VAR_SEPCIFIER_CONST;
+                
+                if(isImmut) 
+                    d->var.specifierFlags |= A_DECL_VAR_SEPCIFIER_IMMUT;
+
                 if(prog->globalVarOrConstDecls == NULL) prog->globalVarOrConstDecls = newASTDeclLL(d);
                 else addASTDeclLL(&prog->globalVarOrConstDecls, d);
-                
             }break;
             case A_DECL_METHOD_BLOCK:
             {
@@ -663,13 +682,14 @@ ASTDecl *decl(SymTable *tbl)
         }break;
         case TOK_IMPORT_KW: d = importDecl(); break;
         case TOK_OPERATOR_KW: d = operatorDecl(); break;
-        case TOK_CONST_KW: d = constDecl(); break;
         case TOK_TYPEALIAS_KW: d = typealiasDecl(); break;
         case TOK_STRUCT_KW: d = structDecl(); break;
         case TOK_UNION_KW: d = unionDecl(); break;
         case TOK_ENUM_KW: d = enumDecl(); break;
         case TOK_METHOD_KW: d = methodBlockDecl(); break;
-        case '(': d = varDecl(false);
+        case TOK_IMMUT_KW:
+        case TOK_CONST_KW:
+        case '(': d = varDecl(false); break;
         case TOK_IDEN:
         {
             if(peekLex(&tok, ':'))
@@ -887,12 +907,12 @@ ASTDecl *operatorDecl(void)
 TokenLL *declSpecifiers(void)
 {
     // ADD CONST HERE TOO
-    if((tok.type == TOK_IMMUT_KW))
+    if((tok.type == TOK_IMMUT_KW) || (tok.type == TOK_CONST_KW))
     {
         TokenLL *ll = newTokenLL(tok);
 
         tok = lex();
-        while(tok.type == TOK_IMMUT_KW)
+        while((tok.type == TOK_IMMUT_KW) || (tok.type == TOK_CONST_KW))
         {
             addTokenLL(&ll, tok);
             tok = lex();
@@ -941,7 +961,7 @@ ASTDecl *varDeclWithExprIden(ASTExpr *idenExpr, TokenLL *specifiers)
     }
     else parserError(tok, "Expected ':' after identifier for variable declaration, instead got %s", tok.lexeme);
 
-    ASTDecl *d = newASTDeclVar(idenExpr, type, initial);
+    ASTDecl *d = newASTDeclVar(specifiers, idenExpr, type, initial);
 
     d->tags = tags;
     d->var.isUsingDecl = isUsingDeclInStruct;
@@ -975,53 +995,6 @@ ASTDecl *varDecl(bool isStructUnionMember)
     ASTDecl *d = varDeclWithExprIden(idenExpr, specifiers);
 
     return d;
-}
-ASTDecl *constDecl(void)
-{
-    Token iden;
-    ASTType *type = NULL;
-    ASTExpr *initial = NULL;
-
-    if(tok.type == TOK_CONST_KW)
-    {
-        tok = lex();
-        if(tok.type == TOK_IDEN)
-        {
-            iden = tok;
-            tok = lex();
-            if(tok.type == ':')
-            {
-                tok = lex();
-                if(tok.type == '=')
-                {
-                    tok = lex();
-                    type = newASTTypeInfer(iden);
-                    initial =  expr();
-                }
-                else 
-                {
-                    type = typeSpec();
-                    if(tok.type == '=')
-                    {
-                        tok = lex();
-                        initial =  expr();
-                    }
-                    else parserError(tok, "Expected a value for constant declaration but got %s", tok.lexeme);
-                }
-
-                if(tok.type == ';')
-                    tok = lex();
-                else parserError(tok, "Expected ';' after const declaration, instead got %s", tok.lexeme);
-                
-            }
-            else parserError(tok, "Expected ':' after identifier for const declaration, instead got %s", tok.lexeme);
-
-        }
-        else parserError(tok, "Expected identifier for const declaration, instead got %s", tok.lexeme);
-    }
-    else parserError(tok, "Expected const kw, for const declaration but got %s", tok.lexeme);
-
-    return newASTDeclConst(iden, type, initial);
 }
 ASTDecl *typealiasDecl(void)
 {
@@ -1304,7 +1277,6 @@ ASTStmt *stmt(void)
 
     switch(tok.type)
     {
-        case TOK_CONST_KW: s = newASTStmtDecl(constDecl()); break;
         case TOK_TYPEALIAS_KW: s = newASTStmtDecl(typealiasDecl()); break;
         case TOK_STRUCT_KW: s = newASTStmtDecl(structDecl()); break;
         case TOK_UNION_KW: s = newASTStmtDecl(unionDecl()); break;
@@ -1358,7 +1330,9 @@ ASTStmt *stmt(void)
             ASTExpr *r = NULL;
             TokenLL *specifiers = declSpecifiers();
 
-            l = expr();
+            if(specifiers != NULL)
+                l = primaryTerm();
+            else l = expr();
             
             if(tok.type == ':')
             {

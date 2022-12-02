@@ -6,11 +6,11 @@
 - [ ] Add bool to expression ast which determines if the expression is made up of constants or not, eg 90, {0, 1}
 
 - [ ] add immut and const keywords as declarations specifiers
-- [ ] add type static methods
+- [ ] add type static methods, #int::ToString()
 - [ ] pls for gods sake refactor the code a little its a mess
 - [ ] remove the tuple mess in the checker, to the codegen
 - [ ] add global initialiser and deinitialiser functions
      
      - [ ] for both constants, immuts, and variables
 
-- [ ] biggest thing is to build a tree of declration dependencies
+- [ ] biggest thing is to build a tree of declaration dependencies

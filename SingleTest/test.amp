@@ -15,11 +15,16 @@ main()
     immut a := "moiz";
     aas := "moiz";
 
+    const bob: int = 90;
+
     bomb := (23022, 2);
 
-    av: []int = []{1, 23, 23, 121233, 3};
+    av: []i64 = []{1, 23, 23, 121233, 3 + bob};
 
-    avv := cast (* [5] int) av.data;
+    avv := cast (* [5] i64) av.data;
 
-    io::printLn("%", bomb);
+    for (i in @avv)
+    {
+        io::printLn("%", i);
+    }
 }

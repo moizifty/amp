@@ -299,96 +299,96 @@ void pass2TopLevelAliasesStructured(ASTDeclLL *aliasesDecls, ASTDeclLL *constsDe
 
         while(currDecl != NULL)
         {
-            ASTDecl *d = currDecl->item;
+            // ASTDecl *d = currDecl->item;
 
-            if(d->kind == A_DECL_VAR)
-            {
-                currDecl = currDecl->next;
-                continue;
-            }
+            // if(d->kind == A_DECL_VAR)
+            // {
+            //     currDecl = currDecl->next;
+            //     continue;
+            // }
 
-            SymEntryLL *restoreLocal = d->tbl->localTbl;
-            SymEntryLL *restoreConst = d->tbl->constTbl;
-            SymEntryLL *restoreType = d->tbl->typeTbl;
+            // SymEntryLL *restoreLocal = d->tbl->localTbl;
+            // SymEntryLL *restoreConst = d->tbl->constTbl;
+            // SymEntryLL *restoreType = d->tbl->typeTbl;
 
-            char *name = NULL;
+            // char *name = NULL;
 
-            bool isVar = d->kind == A_DECL_VAR;
-            bool isConst = d->kind == A_DECL_CONST;
+            // bool isVar = d->kind == A_DECL_VAR;
+            // bool isConst = d->kind == A_DECL_CONST;
 
-            //todo: tuple lhs var decl
-            name = (isVar) ? d->var.idenExpr->iden.lexeme : d->constDecl.iden.lexeme;
+            // //todo: tuple lhs var decl
+            // name = (isVar) ? d->var.idenExpr->iden.lexeme : d->constDecl.iden.lexeme;
 
-            globalContext.cc.checkingLocalsSymTble = d->tbl;
-            SymEntry *e = _symTableLookupGlobal(d->tbl, name);
+            // globalContext.cc.checkingLocalsSymTble = d->tbl;
+            // SymEntry *e = _symTableLookupGlobal(d->tbl, name);
             
-            if(e != NULL)
-            {
-                checkerError(d->startTok, "Identifier '%s' is already being used for declaration of type ", name);
-                printCheckerType(e->type);
-                fprintf(stderr, "\n");
-            }
-            else
-            {
-                CheckerType *type = NULL;
+            // if(e != NULL)
+            // {
+            //     checkerError(d->startTok, "Identifier '%s' is already being used for declaration of type ", name);
+            //     printCheckerType(e->type);
+            //     fprintf(stderr, "\n");
+            // }
+            // else
+            // {
+            //     CheckerType *type = NULL;
 
-                if(isVar)
-                {
-                    d->var.globalVarInitialCodeGenStmts = newASTStmtLL(NULL);
+            //     if(isVar)
+            //     {
+            //         d->var.globalVarInitialCodeGenStmts = newASTStmtLL(NULL);
 
-                    globalContext.cc.currStmtBeingChecked = d->var.globalVarInitialCodeGenStmts;
-                    if(d->var.type->kind != A_TYPE_INFER) 
-                    {
-                        checkType(d->var.type);
-                        //todo: CHECK type ==  initializer type
-                        if((d->var.initial != NULL) && !checkRHSExprWithTypeAndCast(d->var.type->checkType, &d->var.initial, true, false))
-                        {
-                            checkerError(d->startTok, "Expected variable declaration type to match initial value but type: ");
-                            printCheckerType(d->var.type->checkType);
-                            fprintf(stderr, " and initial value: ");
-                            printCheckerType(d->var.initial->checkType);
-                            fprintf(stderr, "\n");
+            //         globalContext.cc.currStmtBeingChecked = d->var.globalVarInitialCodeGenStmts;
+            //         if(d->var.type->kind != A_TYPE_INFER) 
+            //         {
+            //             checkType(d->var.type);
+            //             //todo: CHECK type ==  initializer type
+            //             if((d->var.initial != NULL) && !checkRHSExprWithTypeAndCast(d->var.type->checkType, &d->var.initial, true, false))
+            //             {
+            //                 checkerError(d->startTok, "Expected variable declaration type to match initial value but type: ");
+            //                 printCheckerType(d->var.type->checkType);
+            //                 fprintf(stderr, " and initial value: ");
+            //                 printCheckerType(d->var.initial->checkType);
+            //                 fprintf(stderr, "\n");
 
-                            prettyPrintCheckerSourceError(d->var.initial->startTok, d->var.initial->endTok);
-                        }
-                    }
-                    else 
-                    {
-                        checkExpr(d->var.initial, false);
-                        d->var.type->checkType = d->var.initial->checkType;
-                    }
+            //                 prettyPrintCheckerSourceError(d->var.initial->startTok, d->var.initial->endTok);
+            //             }
+            //         }
+            //         else 
+            //         {
+            //             checkExpr(d->var.initial, false);
+            //             d->var.type->checkType = d->var.initial->checkType;
+            //         }
 
-                    type = d->var.type->checkType;
+            //         type = d->var.type->checkType;
                     
-                    globalContext.cc.currStmtBeingChecked = NULL;
-                }
-                else
-                {
-                    //TODO CONSTS
-                }
+            //         globalContext.cc.currStmtBeingChecked = NULL;
+            //     }
+            //     else
+            //     {
+            //         //TODO CONSTS
+            //     }
 
-                if(type != NULL)
-                    SET_TYPE_FLAG(type, checkDeclTags(d, d->tags));
+            //     if(type != NULL)
+            //         SET_TYPE_FLAG(type, checkDeclTags(d, d->tags));
 
-                if(isVar)
-                {
-                    e = _symTableInsertGlobal(d->tbl, name, type, d->startTok);
-                }
-                else
-                {
-                    e = _symTableInsertGlobal(d->tbl, name, type, d->startTok);
-                    e->isActualConst = true;
-                }
+            //     if(isVar)
+            //     {
+            //         e = _symTableInsertGlobal(d->tbl, name, type, d->startTok);
+            //     }
+            //     else
+            //     {
+            //         e = _symTableInsertGlobal(d->tbl, name, type, d->startTok);
+            //         e->isActualConst = true;
+            //     }
 
-                d->declType = e->type;
+            //     d->declType = e->type;
 
-            }
+            // }
             
-            _symTableRestoreLocal(d->tbl, restoreLocal);
-            _symTableRestoreConst(d->tbl, restoreConst);
-            _symTableRestoreType(d->tbl, restoreType);
+            // _symTableRestoreLocal(d->tbl, restoreLocal);
+            // _symTableRestoreConst(d->tbl, restoreConst);
+            // _symTableRestoreType(d->tbl, restoreType);
 
-            globalContext.cc.checkingLocalsSymTble = tempSymTable;
+            // globalContext.cc.checkingLocalsSymTble = tempSymTable;
             currDecl = currDecl->next;
         }
     }
@@ -624,118 +624,118 @@ void pass2FillRemainingInfo(ASTDeclLL *aliasesDecls, ASTDeclLL *constsDecls, AST
 
         while(currDecl != NULL)
         {
-            ASTDecl *d = currDecl->item;
+            // ASTDecl *d = currDecl->item;
 
-            if(d->kind == A_DECL_VAR)
-            {
-                currDecl = currDecl->next;
-                continue;
-            }
+            // if(d->kind == A_DECL_VAR)
+            // {
+            //     currDecl = currDecl->next;
+            //     continue;
+            // }
 
-            SymEntryLL *restoreLocal = d->tbl->localTbl;
-            SymEntryLL *restoreConst = d->tbl->constTbl;
-            SymEntryLL *restoreType = d->tbl->typeTbl;
+            // SymEntryLL *restoreLocal = d->tbl->localTbl;
+            // SymEntryLL *restoreConst = d->tbl->constTbl;
+            // SymEntryLL *restoreType = d->tbl->typeTbl;
 
-            char *name = NULL;
+            // char *name = NULL;
 
-            bool isVar = d->kind == A_DECL_VAR;
-            bool isConst = d->kind == A_DECL_CONST;
+            // bool isVar = d->kind == A_DECL_VAR;
+            // bool isConst = d->kind == A_DECL_CONST;
 
-            //todo: tuple lhs var decl
-            name = (isVar) ? d->var.idenExpr->iden.lexeme : d->constDecl.iden.lexeme;
+            // //todo: tuple lhs var decl
+            // name = (isVar) ? d->var.idenExpr->iden.lexeme : d->constDecl.iden.lexeme;
 
-            globalContext.cc.checkingLocalsSymTble = d->tbl;
-            SymEntry *e = _symTableLookupGlobal(d->tbl, name);
+            // globalContext.cc.checkingLocalsSymTble = d->tbl;
+            // SymEntry *e = _symTableLookupGlobal(d->tbl, name);
             
-            {
-                CheckerType *type = NULL;
+            // {
+            //     CheckerType *type = NULL;
 
-                if(isVar)
-                {
-                    d->var.globalVarInitialCodeGenStmts = newASTStmtLL(NULL);
+            //     if(isVar)
+            //     {
+            //         d->var.globalVarInitialCodeGenStmts = newASTStmtLL(NULL);
 
-                    globalContext.cc.currStmtBeingChecked = d->var.globalVarInitialCodeGenStmts;
-                    if(d->var.type->kind != A_TYPE_INFER) 
-                    {
-                        checkType(d->var.type);
-                        //todo: CHECK type ==  initializer type
-                        if((d->var.initial != NULL) && !checkRHSExprWithTypeAndCast(d->var.type->checkType, &d->var.initial, true, false))
-                        {
-                            checkerError(d->startTok, "Expected variable declaration type to match initial value but type: ");
-                            printCheckerType(d->var.type->checkType);
-                            fprintf(stderr, " and initial value: ");
-                            printCheckerType(d->var.initial->checkType);
-                            fprintf(stderr, "\n");
+            //         globalContext.cc.currStmtBeingChecked = d->var.globalVarInitialCodeGenStmts;
+            //         if(d->var.type->kind != A_TYPE_INFER) 
+            //         {
+            //             checkType(d->var.type);
+            //             //todo: CHECK type ==  initializer type
+            //             if((d->var.initial != NULL) && !checkRHSExprWithTypeAndCast(d->var.type->checkType, &d->var.initial, true, false))
+            //             {
+            //                 checkerError(d->startTok, "Expected variable declaration type to match initial value but type: ");
+            //                 printCheckerType(d->var.type->checkType);
+            //                 fprintf(stderr, " and initial value: ");
+            //                 printCheckerType(d->var.initial->checkType);
+            //                 fprintf(stderr, "\n");
 
-                            prettyPrintCheckerSourceError(d->var.initial->startTok, d->var.initial->endTok);
-                        }
-                    }
-                    else 
-                    {
-                        checkExpr(d->var.initial, false);
-                        d->var.type->checkType = d->var.initial->checkType;
-                    }
+            //                 prettyPrintCheckerSourceError(d->var.initial->startTok, d->var.initial->endTok);
+            //             }
+            //         }
+            //         else 
+            //         {
+            //             checkExpr(d->var.initial, false);
+            //             d->var.type->checkType = d->var.initial->checkType;
+            //         }
 
-                    type = d->var.type->checkType;
+            //         type = d->var.type->checkType;
                     
-                    globalContext.cc.currStmtBeingChecked = NULL;
-                }
-                else
-                {       
-                    if(d->constDecl.type->kind != A_TYPE_INFER) 
-                    {
-                        checkType(d->constDecl.type);
-                        //todo: CHECK type ==  initializer type
-                        if((d->constDecl.initial != NULL) && !checkRHSExprWithTypeAndCast(d->constDecl.type->checkType, &d->constDecl.initial, true, false))
-                        {
-                            checkerError(d->startTok, "Expected constant declaration type to match initial value but type: ");
-                            printCheckerType(d->constDecl.type->checkType);
-                            fprintf(stderr, " and initial value: ");
-                            printCheckerType(d->constDecl.initial->checkType);
-                            fprintf(stderr, "\n");
+            //         globalContext.cc.currStmtBeingChecked = NULL;
+            //     }
+            //     else
+            //     {       
+            //         if(d->constDecl.type->kind != A_TYPE_INFER) 
+            //         {
+            //             checkType(d->constDecl.type);
+            //             //todo: CHECK type ==  initializer type
+            //             if((d->constDecl.initial != NULL) && !checkRHSExprWithTypeAndCast(d->constDecl.type->checkType, &d->constDecl.initial, true, false))
+            //             {
+            //                 checkerError(d->startTok, "Expected constant declaration type to match initial value but type: ");
+            //                 printCheckerType(d->constDecl.type->checkType);
+            //                 fprintf(stderr, " and initial value: ");
+            //                 printCheckerType(d->constDecl.initial->checkType);
+            //                 fprintf(stderr, "\n");
 
-                            prettyPrintCheckerSourceError(d->constDecl.initial->startTok, d->constDecl.initial->endTok);
-                        }
-                    }
-                    else 
-                    {
-                        checkExpr(d->constDecl.initial, false);
-                        d->constDecl.type->checkType = d->constDecl.initial->checkType;
-                    }
+            //                 prettyPrintCheckerSourceError(d->constDecl.initial->startTok, d->constDecl.initial->endTok);
+            //             }
+            //         }
+            //         else 
+            //         {
+            //             checkExpr(d->constDecl.initial, false);
+            //             d->constDecl.type->checkType = d->constDecl.initial->checkType;
+            //         }
 
-                    if(d->constDecl.initial->compTimeVal.kind == A_EXPR_COMP_TIME_RUNTIME)
-                    {
-                        checkerErrorLn(d->startTok, "Expected constant declaration to have constant initial value");
+            //         if(d->constDecl.initial->compTimeVal.kind == A_EXPR_COMP_TIME_RUNTIME)
+            //         {
+            //             checkerErrorLn(d->startTok, "Expected constant declaration to have constant initial value");
 
-                        prettyPrintCheckerSourceError(d->constDecl.initial->startTok, d->constDecl.initial->endTok);
-                    }
+            //             prettyPrintCheckerSourceError(d->constDecl.initial->startTok, d->constDecl.initial->endTok);
+            //         }
 
-                    type = d->constDecl.type->checkType;
-                }
+            //         type = d->constDecl.type->checkType;
+            //     }
 
-                if(type != NULL)
-                    SET_TYPE_FLAG(type, checkDeclTags(d, d->tags));
+            //     if(type != NULL)
+            //         SET_TYPE_FLAG(type, checkDeclTags(d, d->tags));
 
-                if(isVar)
-                {
-                    e = _symTableInsertGlobal(d->tbl, name, type, d->startTok);
-                }
-                else
-                {
-                    e->type = type;
-                    e->isActualConst = true;
-                    e->constVal = d->constDecl.initial->compTimeVal;
-                }
+            //     if(isVar)
+            //     {
+            //         e = _symTableInsertGlobal(d->tbl, name, type, d->startTok);
+            //     }
+            //     else
+            //     {
+            //         e->type = type;
+            //         e->isActualConst = true;
+            //         e->constVal = d->constDecl.initial->compTimeVal;
+            //     }
 
-                d->declType = e->type;
+            //     d->declType = e->type;
 
-            }
+            // }
             
-            _symTableRestoreLocal(d->tbl, restoreLocal);
-            _symTableRestoreConst(d->tbl, restoreConst);
-            _symTableRestoreType(d->tbl, restoreType);
+            // _symTableRestoreLocal(d->tbl, restoreLocal);
+            // _symTableRestoreConst(d->tbl, restoreConst);
+            // _symTableRestoreType(d->tbl, restoreType);
 
-            globalContext.cc.checkingLocalsSymTble = tempSymTable;
+            // globalContext.cc.checkingLocalsSymTble = tempSymTable;
             currDecl = currDecl->next;
         }
     }
@@ -1146,11 +1146,6 @@ void pass3TopLevelFuncsMethodsVars(ASTDeclLL *funcDecls, ASTDeclLL *methodBlockD
         {
             ASTDecl *d = currDecl->item;
 
-            if(d->kind == A_DECL_CONST)
-            {
-                currDecl = currDecl->next;
-                continue;
-            }
             SymEntryLL *restoreLocal = d->tbl->localTbl;
             SymEntryLL *restoreConst = d->tbl->constTbl;
             SymEntryLL *restoreType = d->tbl->typeTbl;
@@ -1158,10 +1153,9 @@ void pass3TopLevelFuncsMethodsVars(ASTDeclLL *funcDecls, ASTDeclLL *methodBlockD
             char *name = NULL;
 
             bool isVar = d->kind == A_DECL_VAR;
-            bool isConst = d->kind == A_DECL_CONST;
 
             //todo: tuple lhs var decl
-            name = (isVar) ? d->var.idenExpr->iden.lexeme : d->constDecl.iden.lexeme;
+            name = d->var.idenExpr->iden.lexeme;
 
             globalContext.cc.checkingLocalsSymTble = d->tbl;
             SymEntry *e = _symTableLookupGlobal(d->tbl, name);

@@ -109,7 +109,8 @@ enum ASTExprKind
 
 #define IS_EXPR_COMPTIME_KIND(EXPR_PTR, KIND) ((EXPR_PTR)->compTimeVal.kind == (KIND)) 
 #define GET_EXPR_COMPTIME_VAL(EXPR_PTR, which) ((EXPR_PTR)->compTimeVal which)
-
+#define A_DECL_VAR_SEPCIFIER_CONST  (1 << 0)
+#define A_DECL_VAR_SEPCIFIER_IMMUT  (1 << 1)
         
 struct ASTExpr
 {
@@ -625,8 +626,6 @@ struct ASTMatchArm
 enum ASTDeclKind
 {
     A_DECL_VAR,
-    A_DECL_IMMUT,
-    A_DECL_CONST,
     A_DECL_TYPE,
     A_DECL_FUNC,
     A_DECL_OPERATOR_FUNC,
@@ -671,23 +670,10 @@ struct ASTDecl
 
             //any literal / func statements for global vars tht should be genenrated before global var
             ASTStmtLL *globalVarInitialCodeGenStmts;
+
+            uint64_t specifierFlags;
+            TokenLL *specifiers;
         }var;
-
-        struct
-        {
-            ASTExpr *idenExpr;
-            ASTType *type;
-            ASTExpr *initial;
-
-            bool isUsingDecl; //is a using decl inside struct
-        }immut;
-
-        struct
-        {
-            Token iden;
-            ASTType *type;
-            ASTExpr *initial;
-        }constDecl;
 
         struct
         {
@@ -1057,9 +1043,7 @@ void addASTMatchArmlLL(ASTMatchArmLL **ll, ASTMatchArm *item);
 
 
 ASTDecl *allocASTDecl(ASTDeclKind kind, Token startTok);
-ASTDecl *newASTDeclVar(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial);
-ASTDecl *newASTDeclImmut(ASTExpr *idenExpr, ASTType *type, ASTExpr *initial);
-ASTDecl *newASTDeclConst(Token name, ASTType *type, ASTExpr *initial);
+ASTDecl *newASTDeclVar(TokenLL* declSpecs, ASTExpr *idenExpr, ASTType *type, ASTExpr *initial);
 ASTDecl *newASTDeclType(Token name, ASTType *type);
 ASTDecl *newASTDeclFunc(Token iden, ASTGenericTypeLL *genParams, ASTFuncSig *sig, ASTBlock *block, bool mustReturn);
 ASTDecl *newASTDeclOperFunc(Token op, ASTFuncSig *sig, ASTBlock *block);

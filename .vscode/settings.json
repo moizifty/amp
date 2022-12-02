@@ -48,7 +48,8 @@
         "xstddef": "c",
         "*.rh": "c",
         "*.def": "c",
-        "chrono": "c"
+        "chrono": "c",
+        "stdint.h": "c"
     },
     "C_Cpp.default.includePath": [
         "C:\\Users\\moizi\\Desktop\\llvm-project\\llvm\\include\\",

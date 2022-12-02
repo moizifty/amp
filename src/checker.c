@@ -1021,7 +1021,6 @@ void checkLocalDecl(ASTDecl *decl)
     switch(decl->kind)
     {
         case A_DECL_VAR: checkLocalDeclVar(decl); break;
-        case A_DECL_CONST: checkLocalDeclConst(decl); break;
         case A_DECL_ENUM: checkDeclEnum(decl, false); break;
         case A_DECL_IMPORT:
         {
@@ -1256,57 +1255,6 @@ void checkLocalDeclVar(ASTDecl *decl)
         }
     }
     else checkDeclLHSTuple(decl->var.idenExpr, decl->var.type, &(decl->var.initial));
-}
-void checkLocalDeclConst(ASTDecl *decl)
-{
-    SymTable *st = globalContext.cc.checkingLocalsSymTble;
-
-    SymEntry *e = _symTableLookUp(st, decl->constDecl.iden.lexeme, LOOKUP_ALL);
-
-    if(e != NULL)
-    {
-        checkerError(decl->startTok, "Identifier '%s' is already used for declaration of type: ", decl->constDecl.iden.lexeme);
-        printCheckerType(e->type);
-        fprintf(stderr, "\n");
-
-        prettyPrintCheckerSourceError(decl->startTok, decl->startTok);
-    }
-    else 
-    {        
-        if(decl->constDecl.type->kind != A_TYPE_INFER) 
-        {
-            checkType(decl->constDecl.type);
-
-            if((decl->constDecl.initial != NULL) && !checkRHSExprWithTypeAndCast(decl->constDecl.type->checkType, &(decl->constDecl.initial), true, false))
-            {
-                checkerError(decl->startTok, "Expected constant declaration type to match initial value but type: ");
-                printCheckerType(decl->constDecl.type->checkType);
-                fprintf(stderr, " and initial value: ");
-                printCheckerType(decl->constDecl.initial->checkType);
-                fprintf(stderr, "\n");
-
-                prettyPrintCheckerSourceError(decl->constDecl.initial->startTok, decl->constDecl.initial->endTok);
-            }
-        }
-        else
-        {
-            checkExpr(decl->constDecl.initial, false);
-            decl->constDecl.type->checkType = decl->constDecl.initial->checkType;
-        }
-
-        if(decl->constDecl.initial->compTimeVal.kind == A_EXPR_COMP_TIME_RUNTIME)
-        {
-            checkerErrorLn(decl->startTok, "Expected constant declaration to have constant initial value");
-
-            prettyPrintCheckerSourceError(decl->constDecl.initial->startTok, decl->constDecl.initial->endTok);
-        }
-            
-        e = _symTableInsertLocal(st, decl->constDecl.iden.lexeme, decl->constDecl.type->checkType, decl->startTok);
-        e->isActualConst = true;
-        e->constVal = decl->constDecl.initial->compTimeVal;
-
-        if(e->type != NULL) e->type->flags |= checkDeclTags(decl, decl->tags);
-    }
 }
 
 void checkDeclEnum(ASTDecl *decl, bool isGlobalDecl)
@@ -3612,7 +3560,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
                                 entry = _symTableInsertLocal(globalContext.cc.checkingLocalsSymTble, arg->normal->iden.lexeme, funcType->enumType.taggedUnionMemberAccess.unionMember->type, arg->startTok);
                                 
                                 //set the intial value in the arm checking stage
-                                ASTStmt *s = newASTStmtDecl(newASTDeclVar(newASTExprIden(entry->posInFile), newASTTypeInfer(entry->posInFile), NULL));
+                                ASTStmt *s = newASTStmtDecl(newASTDeclVar(NULL, newASTExprIden(entry->posInFile), newASTTypeInfer(entry->posInFile), NULL));
                                 entry->myDecl = s->decl.decl;
                                 ASTMatchArm *arm = globalContext.cc.currMatchArmBeingChecked;
 
@@ -4205,7 +4153,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
 
                 expr->whileExpr.whileStmt->whileStmt.block->stmts->item = newASTStmtAssign(compExpr, expr->whileExpr.whileStmt->whileStmt.block->stmts->item->expr.expr);
 
-                ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), NULL));
+                ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(NULL, newASTExprIden(varName), newASTTypeInfer(varName), NULL));
                 varDeclStmt->decl.decl->var.type->checkType = expr->checkType;
                 entry->myDecl = varDeclStmt->decl.decl;
                 expr->idenSymEntry = entry;
@@ -4248,7 +4196,7 @@ void checkExpr(ASTExpr *expr, bool isIncompletePass)
 
                 expr->block.b->stmts->item = newASTStmtAssign(compExpr,  expr->block.b->stmts->item->expr.expr);
 
-                ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), NULL));
+                ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(NULL, newASTExprIden(varName), newASTTypeInfer(varName), NULL));
                 varDeclStmt->decl.decl->var.type->checkType = expr->checkType;
                 entry->myDecl = varDeclStmt->decl.decl;
                 expr->idenSymEntry = entry;
@@ -5248,7 +5196,7 @@ bool checkInferredIfExpr(CheckerType *inferredtype, ASTExpr *expr, bool isIncomp
             elseBlock->stmts->item = newASTStmtAssign(elseBlockAssignLHS, nextStmtToCheck->expr.expr);
         }
 
-        ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), NULL));
+        ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(NULL, newASTExprIden(varName), newASTTypeInfer(varName), NULL));
         varDeclStmt->decl.decl->var.type->checkType = expr->checkType;
         entry->myDecl = varDeclStmt->decl.decl;
 
@@ -5341,7 +5289,7 @@ bool checkInferredMatchExpr(CheckerType *inferredType, ASTExpr *expr, bool isInc
             expr->compTimeVal.kind = A_EXPR_COMP_TIME_RUNTIME;
             expr->idenSymEntry = entry;
 
-            ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), NULL));
+            ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(NULL, newASTExprIden(varName), newASTTypeInfer(varName), NULL));
             varDeclStmt->decl.decl->var.type->checkType = expr->checkType;
 
             entry->myDecl = varDeclStmt->decl.decl;
@@ -5964,7 +5912,7 @@ void checkDeclLHSTuple(ASTExpr *lhs, ASTType *type ,ASTExpr **rhs)
                         varDeclTok.type = TOK_IDEN;
                         strcpy(varDeclTok.lexeme, allocNewCompilerIden("__tupleLit"));
 
-                        ASTDecl *tempDecl = newASTDeclVar(newASTExprIden(varDeclTok), newASTTypeInfer(varDeclTok), (*rhs));
+                        ASTDecl *tempDecl = newASTDeclVar(NULL, newASTExprIden(varDeclTok), newASTTypeInfer(varDeclTok), (*rhs));
                         ASTStmt *tempDeclStmt = newASTStmtDecl(tempDecl);
 
                         ASTStmtLL *sLL = newASTStmtLL(tempDeclStmt);
@@ -6031,7 +5979,7 @@ void checkDeclLHSTuple(ASTExpr *lhs, ASTType *type ,ASTExpr **rhs)
                                                     prettyPrintCheckerSourceError(startTok, endTok);
                                                 }
                                             }
-                                            s = newASTStmtDecl(newASTDeclVar(lhsTupleExprList[i], declASTType,rhsTupleMemberExpr));
+                                            s = newASTStmtDecl(newASTDeclVar(NULL, lhsTupleExprList[i], declASTType,rhsTupleMemberExpr));
                                         }
 
                                         ASTStmtLL *sLL = newASTStmtLL(s);
@@ -6130,7 +6078,7 @@ void checkDeclLHSTuple(ASTExpr *lhs, ASTType *type ,ASTExpr **rhs)
                                 }
                             }
 
-                            s = newASTStmtDecl(newASTDeclVar(lhsTupleExprList[i], declASTType, rhsTupleExprList[i]));
+                            s = newASTStmtDecl(newASTDeclVar(NULL, lhsTupleExprList[i], declASTType, rhsTupleExprList[i]));
                         }
                         else s = newASTStmtExpr(rhsTupleExprList[i]);
 
@@ -6212,7 +6160,7 @@ void checkAssignLHSTuple(ASTExpr *lhs, ASTExpr **rhs)
                             varDeclTok.type = TOK_IDEN;
                             strcpy(varDeclTok.lexeme, allocNewCompilerIden("__tupleLit"));
 
-                            ASTDecl *tempDecl = newASTDeclVar(newASTExprIden(varDeclTok), newASTTypeInfer(varDeclTok), (*rhs));
+                            ASTDecl *tempDecl = newASTDeclVar(NULL, newASTExprIden(varDeclTok), newASTTypeInfer(varDeclTok), (*rhs));
                             ASTStmt *tempDeclStmt = newASTStmtDecl(tempDecl);
 
                             ASTStmtLL *sLL = newASTStmtLL(tempDeclStmt);
@@ -6360,7 +6308,7 @@ void checkInsertFuncRetAsArgStmts(ASTExpr *funcCallExpr)
      {//incert ret variable decl
         if(e == NULL)
         {
-            ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), NULL));
+            ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(NULL, newASTExprIden(varName), newASTTypeInfer(varName), NULL));
             varDeclStmt->decl.decl->var.type->checkType = funcType->funcType.ret;
 
             ASTStmtLL *varDeclToInsert = newASTStmtLL(varDeclStmt);
@@ -6397,7 +6345,7 @@ void checkInsertAnyCastStmts(ASTExpr *expr)
     SymEntry *e = _symTableLookupLocal(globalContext.cc.checkingLocalsSymTble, varName.lexeme);
     if(e == NULL)
     {
-        ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(newASTExprIden(varName), newASTTypeInfer(varName), expr->cast.expr));
+        ASTStmt *varDeclStmt = newASTStmtDecl(newASTDeclVar(NULL, newASTExprIden(varName), newASTTypeInfer(varName), expr->cast.expr));
         varDeclStmt->decl.decl->var.type->checkType = expr->cast.expr->checkType;
         checkExpr(expr->cast.expr, false);
 
