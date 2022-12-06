@@ -10,7 +10,7 @@ enum e1
 }
 
 [distinct]
-typealias stringgg = string;
+typealias stringgg = bool;
 
 main()
 {
@@ -18,7 +18,7 @@ main()
     immut a := "moiz";
     aas := "moiz";
 
-    ajsdj: stringgg = "sd";
+    ajsdj: stringgg = false;
     const bob: int = 90;
 
     bomb := (23022, 2);

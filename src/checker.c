@@ -5091,6 +5091,19 @@ bool checkInferredExpr(CheckerType *inferredType, ASTExpr **expr, bool shouldIns
                     }
                     else canCast = true;
                 }
+                // handle string literals assigment to distinct string typealiases
+                else if(isTypeString(inferredType) && isTypeString(e->checkType) && (e->compTimeVal.kind == A_EXPR_COMP_TIME_STRING))
+                {
+                    canCast = true;
+                }
+                else if(isTypePointer(inferredType) && isTypePointer(e->checkType) && (e->compTimeVal.kind == A_EXPR_COMP_TIME_NULL))
+                {
+                    canCast = true;
+                }
+                else if(isTypeBoolean(inferredType) && isTypeBoolean(e->checkType) && (e->compTimeVal.kind == A_EXPR_COMP_TIME_BOOL))
+                {
+                    canCast = true;
+                }
 
                 if(!canCast) return false;
             }
