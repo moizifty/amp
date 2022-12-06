@@ -12,5 +12,7 @@
 - [ ] add global initialiser and deinitialiser functions
      
      - [ ] for both constants, immuts, and variables
-
+- [ ] add 0 sized tuples and 1 sized tuples
+- [ ] distinct type aliases
+- [ ] add a #shadow compiler directive which you can add infront of statements (maybe expressions too)
 - [ ] biggest thing is to build a tree of declaration dependencies

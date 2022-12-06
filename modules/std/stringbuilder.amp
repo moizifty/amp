@@ -193,6 +193,10 @@ method StringBuilder
                     ch = '}';
                     (@this).appendBytes(*ch, 1);
                 }
+                TYPE_UNION ->
+                {
+                    (@this).appendStr("(union)");
+                }
                 TYPE_TAGGED_UNION ->
                 {
                     indexInUnion := @(cast( * i64)(a.data + a.type.type.taggedUnion.indexInUnionOffset));

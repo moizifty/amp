@@ -25,6 +25,6 @@ main()
 
     for (i in @avv)
     {
-        io::printLn("%", i);
+        io::printLn("%", typeof(i));
     }
 }

@@ -355,6 +355,14 @@ ASTProg *prog(SymTable *tbl)
                             {
                                 char *sourceFilesDir = allocGetFileFolder(namespace->startTok.pos.filename);
                                 sprintf(fullPath, "\"%s\\%s\"", sourceFilesDir, libName);
+
+                                // even if it is still not found just link the library by name
+                                if(!doesFileExist(fullPath))
+                                {
+                                    sprintf(fullPath, "\"%s\"", libName);
+                                }
+
+                                free(sourceFilesDir);
                             }
 
                             addLinkerLibToImport(entry, fullPath);

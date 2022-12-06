@@ -1289,13 +1289,20 @@ void cgLLVMDeclValueRef(ASTDecl *decl)
             LLVMTypeRef varTypeRef = cgLLVMCheckerTypeToTypeRef(decl->declType, false);
 
             char buf[MAX_IDEN_LEN * 2] = {0};
-            sprintf(buf, "%s_%s", decl->tbl->belongsToNamespace->namespace, decl->var.idenExpr->iden.lexeme);
+            if(CHECK_TYPE_FLAG(decl->declType, TYPE_FOREIGN_FLAG))
+            {
+                sprintf(buf, "%s", decl->var.idenExpr->iden.lexeme);
+            }
+            else sprintf(buf, "%s_%s", decl->tbl->belongsToNamespace->namespace, decl->var.idenExpr->iden.lexeme);
 
             LLVMValueRef glob = LLVMAddGlobal(module, varTypeRef, buf);
             LLVMSetAlignment(glob, LLVMABIAlignmentOfType(targetDataRef, varTypeRef));
 
             //do properly todo
-            LLVMSetInitializer(glob, LLVMConstNull(varTypeRef));
+            if(!CHECK_TYPE_FLAG(decl->declType, TYPE_FOREIGN_FLAG))
+            {
+                LLVMSetInitializer(glob, LLVMConstNull(varTypeRef));
+            }
 
             decl->backendValRef = glob;
 

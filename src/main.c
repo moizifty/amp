@@ -343,7 +343,7 @@ int main(int argc, char **argv)
                 outputExeName,
                 "/nologo", 
                 "/nodefaultlib",
-                "libcmt.lib vcruntime.lib ucrt.lib legacy_stdio_definitions.lib legacy_stdio_wide_specifiers.lib", 
+                "libcmt.lib vcruntime.lib ucrt.lib", 
             };
             
             addLinkerLibsFromNamespaceTableToGlobalContext(globalContext.namespaceTable, &globalContext);

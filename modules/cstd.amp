@@ -1,37 +1,31 @@
-namespace cstd
+namespace cstd with
+{
+    libs = "legacy_stdio_definitions.lib", "legacy_stdio_wide_specifiers.lib";
+}
 
 [foreign("msvcrt")]
-printf(fmt: *ui8, va: ..any) : i64;
+{
+    printf(fmt: *ui8, va: ..any) : i64;
 
-[foreign("msvcrt")]
-_snprintf(out: *ui8, bufsize: i64, fmt: *ui8, va: ..any);
+    _snprintf(out: *ui8, bufsize: i64, fmt: *ui8, va: ..any);
 
-[foreign("msvcrt")]
-malloc(size: i64) : *void;
+    malloc(size: i64) : *void;
 
-[foreign("msvcrt")]
-realloc(ptr: * void, newsize: i64) : *void;
+    realloc(ptr: * void, newsize: i64) : *void;
 
-[foreign("msvcrt")]
-free(ptr: *void);
+    free(ptr: *void);
 
-[foreign("msvcrt")]
-isdigit(ch: int) : bool;
+    isdigit(ch: int) : bool;
 
-[foreign("msvcrt")]
-atol(str: *i8) : i64;
+    atol(str: *i8) : i64;
 
-[foreign("msvcrt")]
-strcmp(a: *ui8, b: *ui8) : i32;
+    strcmp(a: *ui8, b: *ui8) : i32;
 
-[foreign("msvcrt")]
-strlen(str: *ui8) : i64;
+    strlen(str: *ui8) : i64;
 
-[foreign("msvcrt")]
-memcpy(dest: *void, src: *void, n: i64) : *void;
+    memcpy(dest: *void, src: *void, n: i64) : *void;
 
-[foreign("msvcrt")]
-memcmp(a: *void, b: *void, n: i64) : int;
+    memcmp(a: *void, b: *void, n: i64) : int;
 
-[foreign("msvcrt")]
-exit(errCode: int);
+    exit(errCode: int);
+}

@@ -1061,7 +1061,7 @@ int checkDeclTags(ASTDecl *decl, ASTTagLL *tags)
                 checkerErrorLn(currTag->item->name, "The tag '%s' requres atleast 1 parameter, which is the name of the library, eg msvcrt", currTag->item->name.lexeme);
                 prettyPrintCheckerSourceError(currTag->item->name, currTag->item->name);
             }
-            else if(decl->kind == A_DECL_FUNC)
+            else if ((decl->kind == A_DECL_FUNC) || (decl->kind == A_DECL_VAR))
             {
                 Token dllNameParam = currTag->item->paramLL->first->item;
                 char dllName[BUFSIZ] = {0};
@@ -1100,10 +1100,11 @@ int checkDeclTags(ASTDecl *decl, ASTTagLL *tags)
                     }
                     else
                     {
-                        FARPROC procAddr = GetProcAddress(dllMod, decl->func.iden.lexeme);
+                        char *symbolName = (decl->kind == A_DECL_FUNC) ? decl->func.iden.lexeme : decl->var.idenExpr->iden.lexeme;
+                        FARPROC procAddr = GetProcAddress(dllMod, symbolName);
                         if(procAddr == NULL)
                         {
-                            checkerErrorLn(decl->startTok, "symbol '%s' was not found in '%s.dll'", decl->func.iden.lexeme, dllName);
+                            checkerErrorLn(decl->startTok, "symbol '%s' was not found in '%s.dll'", symbolName, dllName);
                             prettyPrintCheckerSourceError(decl->func.iden, decl->func.iden);
                         }
                         else
