@@ -153,6 +153,8 @@ struct CheckerType
         {
             CheckerType *base;
             char *name;
+
+            bool isDistinct;
         }aliasedType;
 
         struct
@@ -331,7 +333,7 @@ CheckerType *newCheckerTypeFloat(int size, int flags);
 CheckerType *newCheckerTypeBool();
 CheckerType *newCheckerTypeString();
 
-CheckerType *newCheckerTypeAliased(CheckerType *base, char *name, int flags);
+CheckerType *newCheckerTypeAliased(CheckerType *base, char *name, bool isDistinct, int flags);
 CheckerType *newCheckerTypeArray(CheckerType *base, int length, bool isSlice, bool isVariadic);
 CheckerType *newCheckerTypePointer(CheckerType *base);
 
@@ -424,8 +426,7 @@ bool isTypeIndexable(CheckerType *type);
 bool isTypeMemberAccessable(CheckerType *type, bool *wasEnum);
 
 bool typeHasMember(CheckerType *t, char *name, size_t *membIndex);
-bool taggedUnionTypeGetBestMember(CheckerType *taggedUnion, CheckerType *membTypeToCheck, bool *castableFound,size_t *membIndex)
-;
+bool taggedUnionTypeGetBestMember(CheckerType *taggedUnion, CheckerType *membTypeToCheck, bool *castableFound,size_t *membIndex);
 
 bool funcHasParam(CheckerType *funcType, char *paramName, size_t *index);
 

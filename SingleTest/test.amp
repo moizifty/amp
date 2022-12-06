@@ -9,12 +9,16 @@ enum e1
     C;
 }
 
+[distinct]
+typealias stringgg = string;
+
 main()
 {
     io::printLn("%", os::getCommandlineArg());
     immut a := "moiz";
     aas := "moiz";
 
+    ajsdj: stringgg = "sd";
     const bob: int = 90;
 
     bomb := (23022, 2);

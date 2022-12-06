@@ -278,7 +278,8 @@ void pass2TopLevelAliasesStructured(ASTDeclLL *aliasesDecls, ASTDeclLL *constsDe
             }
             else
             {
-                CheckerType *t = newCheckerTypeAliased(NULL, name, checkDeclTags(d, d->tags));
+                int declFlags = checkDeclTags(d, d->tags);
+                CheckerType *t = newCheckerTypeAliased(NULL, name, declFlags & TYPE_DISTINCT_FLAG, declFlags);
                 e = _symTableInsertType(d->tbl, name, t, d->startTok);
                 e->type->belongsToFile = d->startTok.pos.filename;
                 e->type->namespaceName = d->tbl->belongsToNamespace->namespace;

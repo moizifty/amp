@@ -871,11 +871,6 @@ LEX_START:
             //     t.type = TOK_FOREIGN_KW;
             //     return t;
             // }
-            else if(!strcmp(t.lexeme, "distinct"))
-            {
-                t.type = TOK_DISTINCT_KW;
-                return t;
-            }
             else if(!strcmp(t.lexeme, "cast"))
             {
                 t.type = TOK_CAST_KW;

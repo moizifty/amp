@@ -122,11 +122,12 @@ CheckerType *newCheckerTypeString()
     return t;
 }
 
-CheckerType *newCheckerTypeAliased(CheckerType *base, char *name, int flags)
+CheckerType *newCheckerTypeAliased(CheckerType *base, char *name, bool isDistinct, int flags)
 {
     CheckerType *t = allocCheckerType(C_TYPE_ALIASED);
     t->aliasedType.base = base;
     t->aliasedType.name = name;
+    t->aliasedType.isDistinct = isDistinct;
     t->typeId = typeCounter++;
     t->flags = flags;
 
@@ -1566,8 +1567,18 @@ bool canImplicitCast(CheckerType *from, CheckerType *to)
 
     if((from == NULL) || (to == NULL)) return false;
 
-    from = (isTypeAliased(from)) ? getAliasedTypeBase(from) : from;
-    to = (isTypeAliased(to)) ? getAliasedTypeBase(to) : to;
+    if(isTypeAliased(from) || isTypeAliased(to))
+    {
+        bool isFromTypeAlias = isTypeAliased(from);
+        bool isToTypeAlias = isTypeAliased(to);
+
+        if(isFromTypeAlias && from->aliasedType.isDistinct) return false;
+
+        if(isToTypeAlias && to->aliasedType.isDistinct) return false;
+        
+        return canImplicitCast((isFromTypeAlias) ? getAliasedTypeBase(from) : from, 
+                                (isToTypeAlias) ? getAliasedTypeBase(to) : to);
+    }
 
     if(areTypesEqual(from, to)) return true; //check again after getting typealias bases
 
